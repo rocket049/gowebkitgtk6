@@ -5,6 +5,10 @@
 前端调用后端的时候用`fetch`调用普通的`web api`。
 后端调用前端的时候，用运行在`websocket`上的`RPC`调用。
 
+## usage:
+
+go get gitee.com/rocket049/gowebkitgtk6@latest
+
 ## 功能扩展：
 
 * 前端可以用`react`等框架制作复杂界面，后端调用前端只需要仿照`static/main.js`的代码改变扩展功能。
