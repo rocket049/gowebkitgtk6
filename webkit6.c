@@ -773,7 +773,6 @@ app_on_app_activate (App* self,
 	gtk_window_set_child (win, (GtkWidget*) _tmp5_);
 	_tmp6_ = self->webview;
 	webkit_web_view_load_uri (_tmp6_, uri);
-	gtk_widget_set_size_request ((GtkWidget*) win, 1024, 768);
 	_tmp7_ = self->webview;
 	g_signal_connect_object (_tmp7_, "context-menu", (GCallback) ___lambda5__webkit_web_view_context_menu, self, 0);
 	gtk_window_present (win);

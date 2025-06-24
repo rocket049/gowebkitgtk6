@@ -97,8 +97,6 @@ public class App: GLib.Object {
         win.set_child(this.webview);
 
         this.webview.load_uri(uri);
-        
-        win.set_size_request(1024, 768);
 
         this.webview.context_menu.connect(( menu)=>{
             this.modify_menu(menu);
