@@ -9,17 +9,17 @@ public class App: GLib.Object {
     private string home_url;
     private string title;
 
-    public void create(string id, string title) {
+    public void create(string id, string title, string uri) {
         this.title = title;
         Gtk.init();
         this.app = new Gtk.Application(id, GLib.ApplicationFlags.DEFAULT_FLAGS);
-    }
-
-    public int run(string uri) {
         this.app.activate.connect((app)=>{
             //stdout.puts("on activate\n");
             this.on_app_activate(this.app, uri);
         });
+    }
+
+    public int run() {
         return this.app.run(null);
     }
 
@@ -118,10 +118,12 @@ public class App: GLib.Object {
         menu.append(item);
     }
     public static App application;
-    public static int show(string id, string title, string url){
+    public static void create_app(string id, string title, string url){
         App.application = new App();
-        App.application.create(id,title);
-        return App.application.run(url);
+        App.application.create(id,title,url);
+    }
+    public static int run_app() {
+        return application.run();
     }
     public static void quit(){
         App.application.app.quit();

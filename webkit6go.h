@@ -51,9 +51,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (App, g_object_unref)
 VALA_EXTERN App* app_application;
 VALA_EXTERN void app_create (App* self,
                  const gchar* id,
-                 const gchar* title);
-VALA_EXTERN gint app_run (App* self,
-              const gchar* uri);
+                 const gchar* title,
+                 const gchar* uri);
+VALA_EXTERN gint app_run (App* self);
 VALA_EXTERN void app_file_save_dialog (const gchar* title,
                            const gchar* start,
                            GAsyncReadyCallback _callback_,
@@ -70,9 +70,10 @@ VALA_EXTERN void app_folder_select_dialog (const gchar* title,
                                GAsyncReadyCallback _callback_,
                                gpointer _user_data_);
 VALA_EXTERN gchar* app_folder_select_dialog_finish (GAsyncResult* _res_);
-VALA_EXTERN gint app_show (const gchar* id,
-               const gchar* title,
-               const gchar* url);
+VALA_EXTERN void app_create_app (const gchar* id,
+                     const gchar* title,
+                     const gchar* url);
+VALA_EXTERN gint app_run_app (void);
 VALA_EXTERN void app_quit (void);
 VALA_EXTERN GtkApplication* app_get_application (void);
 VALA_EXTERN GtkWindow* app_get_window (void);

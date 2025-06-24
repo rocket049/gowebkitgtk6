@@ -17,13 +17,18 @@ extern void file_save_dialog (const gchar* title,
 */
 import "C"
 
-// init and run the app
-func AppRun(id, title, url string) int {
+// create application window
+func AppCreate(id, title, url string) {
 	id1 := C.CString(id)
 	title1 := C.CString(title)
 	url1 := C.CString(url)
 
-	status := C.app_show(id1, title1, url1)
+	C.app_create_app(id1, title1, url1)
+}
+
+// run application
+func AppRun() int {
+	status := C.app_run_app()
 	return int(status)
 }
 

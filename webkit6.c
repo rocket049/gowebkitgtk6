@@ -197,25 +197,6 @@ app_get_instance_private (App* self)
 	return G_STRUCT_MEMBER_P (self, App_private_offset);
 }
 
-void
-app_create (App* self,
-            const gchar* id,
-            const gchar* title)
-{
-	gchar* _tmp0_;
-	GtkApplication* _tmp1_;
-	g_return_if_fail (self != NULL);
-	g_return_if_fail (id != NULL);
-	g_return_if_fail (title != NULL);
-	_tmp0_ = g_strdup (title);
-	_g_free0 (self->priv->title);
-	self->priv->title = _tmp0_;
-	gtk_init ();
-	_tmp1_ = gtk_application_new (id, G_APPLICATION_DEFAULT_FLAGS);
-	_g_object_unref0 (self->app);
-	self->app = _tmp1_;
-}
-
 static Block1Data*
 block1_data_ref (Block1Data* _data1_)
 {
@@ -256,29 +237,48 @@ ___lambda4__g_application_activate (GApplication* _sender,
 	__lambda4_ (self, _sender);
 }
 
-gint
-app_run (App* self,
-         const gchar* uri)
+void
+app_create (App* self,
+            const gchar* id,
+            const gchar* title,
+            const gchar* uri)
 {
 	Block1Data* _data1_;
 	gchar* _tmp0_;
-	GtkApplication* _tmp1_;
+	gchar* _tmp1_;
 	GtkApplication* _tmp2_;
-	gint result;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (uri != NULL, 0);
+	GtkApplication* _tmp3_;
+	g_return_if_fail (self != NULL);
+	g_return_if_fail (id != NULL);
+	g_return_if_fail (title != NULL);
+	g_return_if_fail (uri != NULL);
 	_data1_ = g_slice_new0 (Block1Data);
 	_data1_->_ref_count_ = 1;
 	_data1_->self = g_object_ref (self);
 	_tmp0_ = g_strdup (uri);
 	_g_free0 (_data1_->uri);
 	_data1_->uri = _tmp0_;
-	_tmp1_ = self->app;
-	g_signal_connect_data ((GApplication*) _tmp1_, "activate", (GCallback) ___lambda4__g_application_activate, block1_data_ref (_data1_), (GClosureNotify) block1_data_unref, 0);
-	_tmp2_ = self->app;
-	result = g_application_run ((GApplication*) _tmp2_, (gint) 0, NULL);
+	_tmp1_ = g_strdup (title);
+	_g_free0 (self->priv->title);
+	self->priv->title = _tmp1_;
+	gtk_init ();
+	_tmp2_ = gtk_application_new (id, G_APPLICATION_DEFAULT_FLAGS);
+	_g_object_unref0 (self->app);
+	self->app = _tmp2_;
+	_tmp3_ = self->app;
+	g_signal_connect_data ((GApplication*) _tmp3_, "activate", (GCallback) ___lambda4__g_application_activate, block1_data_ref (_data1_), (GClosureNotify) block1_data_unref, 0);
 	block1_data_unref (_data1_);
 	_data1_ = NULL;
+}
+
+gint
+app_run (App* self)
+{
+	GtkApplication* _tmp0_;
+	gint result;
+	g_return_val_if_fail (self != NULL, 0);
+	_tmp0_ = self->app;
+	result = g_application_run ((GApplication*) _tmp0_, (gint) 0, NULL);
 	return result;
 }
 
@@ -822,25 +822,30 @@ app_modify_menu (App* self,
 	_g_object_unref0 (act1);
 }
 
-gint
-app_show (const gchar* id,
-          const gchar* title,
-          const gchar* url)
+void
+app_create_app (const gchar* id,
+                const gchar* title,
+                const gchar* url)
 {
 	App* _tmp0_;
 	App* _tmp1_;
-	App* _tmp2_;
-	gint result;
-	g_return_val_if_fail (id != NULL, 0);
-	g_return_val_if_fail (title != NULL, 0);
-	g_return_val_if_fail (url != NULL, 0);
+	g_return_if_fail (id != NULL);
+	g_return_if_fail (title != NULL);
+	g_return_if_fail (url != NULL);
 	_tmp0_ = app_new ();
 	_g_object_unref0 (app_application);
 	app_application = _tmp0_;
 	_tmp1_ = app_application;
-	app_create (_tmp1_, id, title);
-	_tmp2_ = app_application;
-	result = app_run (_tmp2_, url);
+	app_create (_tmp1_, id, title, url);
+}
+
+gint
+app_run_app (void)
+{
+	App* _tmp0_;
+	gint result;
+	_tmp0_ = app_application;
+	result = app_run (_tmp0_);
 	return result;
 }
 
