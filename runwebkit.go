@@ -4,51 +4,15 @@ package gowebkitgtk6
 #include <stdlib.h>
 #include "webkit6go.h"
 
-extern void WriteFolderPath(char *);
-extern void WriteFilePath(char *);
-extern void WriteSavePath(char *);
+extern void file_select_dialog(const gchar* title,
+                             const gchar* patten,
+                             const gchar* start);
 
-static void save_callback(GObject *src, GAsyncResult* _res_, gpointer user_data){
-	char* res = (char*)app_file_save_dialog_finish( _res_);
-	WriteSavePath(res);
-}
-static void folder_callback(GObject *src, GAsyncResult* _res_, gpointer user_data){
-	char* res = (char*)app_folder_select_dialog_finish( _res_);
-	WriteFolderPath(res);
-}
-static void file_callback(GObject *src, GAsyncResult* _res_, gpointer user_data){
-	char* res = (char*)app_file_select_dialog_finish(_res_);
-	WriteFilePath(res);
-}
+extern void folder_select_dialog (const gchar* title,
+                               const gchar* start);
 
-void file_select_dialog(const gchar* title,
-                             const gchar* mime_type,
-                             const gchar* start)
-{
-	app_file_select_dialog (title,
-                             mime_type,
-                             start,
-                             file_callback,
-                             NULL);
-}
-
-void folder_select_dialog (const gchar* title,
-                               const gchar* start)
-{
-    app_folder_select_dialog(title,
-		start,
-		folder_callback,
-		NULL);
-}
-
-void file_save_dialog (const gchar* title,
-                               const gchar* start)
-{
-    app_file_save_dialog(title,
-		start,
-		save_callback,
-		NULL);
-}
+extern void file_save_dialog (const gchar* title,
+                               const gchar* start);
 
 */
 import "C"

@@ -4,6 +4,8 @@ import "C"
 
 var saveChan chan string
 
+// Do Not use this
+//
 //export WriteSavePath
 func WriteSavePath(s *C.char) {
 	if saveChan != nil {
@@ -13,6 +15,8 @@ func WriteSavePath(s *C.char) {
 
 var fileChan chan string
 
+// Do Not use this
+//
 //export WriteFilePath
 func WriteFilePath(s *C.char) {
 	if fileChan != nil {
@@ -22,6 +26,8 @@ func WriteFilePath(s *C.char) {
 
 var folderChan chan string
 
+// Do Not use this
+//
 //export WriteFolderPath
 func WriteFolderPath(s *C.char) {
 	if folderChan != nil {
