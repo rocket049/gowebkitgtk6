@@ -79,3 +79,8 @@ func GetWindow() *C.GtkWindow {
 func GetWebView() *C.WebKitWebView {
 	return C.app_get_webview()
 }
+
+// resize window
+func AppResize(w, h int) {
+	C.app_resize(C.int(w), C.int(h))
+}

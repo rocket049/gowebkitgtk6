@@ -135,4 +135,13 @@ public class App: GLib.Object {
     public static WebKit.WebView get_webview() {
         return application.webview;
     }
+    public static void resize(int w, int h) {
+        Idle.add(
+            ()=>{
+                application.win.set_size_request(w, h);
+                return true;
+            }, 
+            GLib.Priority.DEFAULT_IDLE);
+        
+    }
 }
