@@ -172,22 +172,25 @@ static gboolean app_folder_select_dialog_co (AppFolderSelectDialogData* _data_);
 static void app_folder_select_dialog_ready (GObject* source_object,
                                      GAsyncResult* _res_,
                                      gpointer _user_data_);
-static gboolean __lambda5_ (App* self,
+static gboolean __lambda5_ (App* self);
+static gboolean ___lambda5__gtk_window_close_request (GtkWindow* _sender,
+                                               gpointer self);
+static gboolean __lambda6_ (App* self,
                      WebKitContextMenu* menu);
 static void app_modify_menu (App* self,
                       WebKitContextMenu* menu);
-static gboolean ___lambda5__webkit_web_view_context_menu (WebKitWebView* _sender,
+static gboolean ___lambda6__webkit_web_view_context_menu (WebKitWebView* _sender,
                                                    WebKitContextMenu* context_menu,
                                                    WebKitHitTestResult* hit_test_result,
                                                    gpointer self);
-static void __lambda6_ (App* self);
-static void ___lambda6__g_simple_action_activate (GSimpleAction* _sender,
+static void __lambda7_ (App* self);
+static void ___lambda7__g_simple_action_activate (GSimpleAction* _sender,
                                            GVariant* parameter,
                                            gpointer self);
 static Block2Data* block2_data_ref (Block2Data* _data2_);
 static void block2_data_unref (void * _userdata_);
-static gboolean __lambda7_ (Block2Data* _data2_);
-static gboolean ___lambda7__gsource_func (gpointer self);
+static gboolean __lambda8_ (Block2Data* _data2_);
+static gboolean ___lambda8__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
 
@@ -710,7 +713,27 @@ app_folder_select_dialog_co (AppFolderSelectDialogData* _data_)
 }
 
 static gboolean
-__lambda5_ (App* self,
+__lambda5_ (App* self)
+{
+	GtkApplication* _tmp0_;
+	gboolean result;
+	_tmp0_ = self->app;
+	g_application_quit ((GApplication*) _tmp0_);
+	result = TRUE;
+	return result;
+}
+
+static gboolean
+___lambda5__gtk_window_close_request (GtkWindow* _sender,
+                                      gpointer self)
+{
+	gboolean result;
+	result = __lambda5_ ((App*) self);
+	return result;
+}
+
+static gboolean
+__lambda6_ (App* self,
             WebKitContextMenu* menu)
 {
 	gboolean result;
@@ -721,13 +744,13 @@ __lambda5_ (App* self,
 }
 
 static gboolean
-___lambda5__webkit_web_view_context_menu (WebKitWebView* _sender,
+___lambda6__webkit_web_view_context_menu (WebKitWebView* _sender,
                                           WebKitContextMenu* context_menu,
                                           WebKitHitTestResult* hit_test_result,
                                           gpointer self)
 {
 	gboolean result;
-	result = __lambda5_ ((App*) self, context_menu);
+	result = __lambda6_ ((App*) self, context_menu);
 	return result;
 }
 
@@ -771,10 +794,11 @@ app_on_app_activate (App* self,
 	self->webview = _tmp4_;
 	_tmp5_ = self->webview;
 	gtk_window_set_child (win, (GtkWidget*) _tmp5_);
+	g_signal_connect_object (win, "close-request", (GCallback) ___lambda5__gtk_window_close_request, self, 0);
 	_tmp6_ = self->webview;
 	webkit_web_view_load_uri (_tmp6_, uri);
 	_tmp7_ = self->webview;
-	g_signal_connect_object (_tmp7_, "context-menu", (GCallback) ___lambda5__webkit_web_view_context_menu, self, 0);
+	g_signal_connect_object (_tmp7_, "context-menu", (GCallback) ___lambda6__webkit_web_view_context_menu, self, 0);
 	gtk_window_present (win);
 	_tmp8_ = _g_object_ref0 (win);
 	_g_object_unref0 (self->win);
@@ -783,7 +807,7 @@ app_on_app_activate (App* self,
 }
 
 static void
-__lambda6_ (App* self)
+__lambda7_ (App* self)
 {
 	WebKitWebView* _tmp0_;
 	const gchar* _tmp1_;
@@ -793,11 +817,11 @@ __lambda6_ (App* self)
 }
 
 static void
-___lambda6__g_simple_action_activate (GSimpleAction* _sender,
+___lambda7__g_simple_action_activate (GSimpleAction* _sender,
                                       GVariant* parameter,
                                       gpointer self)
 {
-	__lambda6_ ((App*) self);
+	__lambda7_ ((App*) self);
 }
 
 static void
@@ -812,7 +836,7 @@ app_modify_menu (App* self,
 	g_return_if_fail (menu != NULL);
 	_tmp0_ = g_simple_action_new ("go home", NULL);
 	act1 = _tmp0_;
-	g_signal_connect_object (act1, "activate", (GCallback) ___lambda6__g_simple_action_activate, self, 0);
+	g_signal_connect_object (act1, "activate", (GCallback) ___lambda7__g_simple_action_activate, self, 0);
 	_tmp1_ = webkit_context_menu_item_new_from_gaction (G_TYPE_CHECK_INSTANCE_TYPE (act1, g_action_get_type ()) ? ((GAction*) act1) : NULL, "go home", NULL);
 	g_object_ref_sink (_tmp1_);
 	item = _tmp1_;
@@ -918,7 +942,7 @@ block2_data_unref (void * _userdata_)
 }
 
 static gboolean
-__lambda7_ (Block2Data* _data2_)
+__lambda8_ (Block2Data* _data2_)
 {
 	App* _tmp0_;
 	GtkWindow* _tmp1_;
@@ -931,10 +955,10 @@ __lambda7_ (Block2Data* _data2_)
 }
 
 static gboolean
-___lambda7__gsource_func (gpointer self)
+___lambda8__gsource_func (gpointer self)
 {
 	gboolean result;
-	result = __lambda7_ (self);
+	result = __lambda8_ (self);
 	return result;
 }
 
@@ -947,7 +971,7 @@ app_resize (gint w,
 	_data2_->_ref_count_ = 1;
 	_data2_->w = w;
 	_data2_->h = h;
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda7__gsource_func, block2_data_ref (_data2_), block2_data_unref);
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda8__gsource_func, block2_data_ref (_data2_), block2_data_unref);
 	block2_data_unref (_data2_);
 	_data2_ = NULL;
 }

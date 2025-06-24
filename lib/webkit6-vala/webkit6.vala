@@ -96,6 +96,11 @@ public class App: GLib.Object {
         this.webview = new WebKit.WebView();
         win.set_child(this.webview);
 
+        win.close_request.connect(()=>{
+            this.app.quit();
+            return true;
+        });
+
         this.webview.load_uri(uri);
 
         this.webview.context_menu.connect(( menu)=>{
