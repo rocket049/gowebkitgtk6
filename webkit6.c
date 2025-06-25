@@ -191,6 +191,8 @@ static Block2Data* block2_data_ref (Block2Data* _data2_);
 static void block2_data_unref (void * _userdata_);
 static gboolean __lambda8_ (Block2Data* _data2_);
 static gboolean ___lambda8__gsource_func (gpointer self);
+static gboolean __lambda9_ (void);
+static gboolean ___lambda9__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
 
@@ -774,7 +776,11 @@ app_on_app_activate (App* self,
 	WebKitWebView* _tmp5_;
 	WebKitWebView* _tmp6_;
 	WebKitWebView* _tmp7_;
-	GtkWindow* _tmp8_;
+	WebKitSettings* settings = NULL;
+	WebKitWebView* _tmp8_;
+	WebKitSettings* _tmp9_;
+	WebKitSettings* _tmp10_;
+	GtkWindow* _tmp11_;
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (app != NULL);
 	g_return_if_fail (uri != NULL);
@@ -799,10 +805,16 @@ app_on_app_activate (App* self,
 	webkit_web_view_load_uri (_tmp6_, uri);
 	_tmp7_ = self->webview;
 	g_signal_connect_object (_tmp7_, "context-menu", (GCallback) ___lambda6__webkit_web_view_context_menu, self, 0);
+	_tmp8_ = self->webview;
+	_tmp9_ = webkit_web_view_get_settings (_tmp8_);
+	_tmp10_ = _g_object_ref0 (_tmp9_);
+	settings = _tmp10_;
+	g_object_set ((GObject*) settings, "enable-developer_extras", TRUE, NULL, NULL);
 	gtk_window_present (win);
-	_tmp8_ = _g_object_ref0 (win);
+	_tmp11_ = _g_object_ref0 (win);
 	_g_object_unref0 (self->win);
-	self->win = _tmp8_;
+	self->win = _tmp11_;
+	_g_object_unref0 (settings);
 	_g_object_unref0 (win);
 }
 
@@ -974,6 +986,40 @@ app_resize (gint w,
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda8__gsource_func, block2_data_ref (_data2_), block2_data_unref);
 	block2_data_unref (_data2_);
 	_data2_ = NULL;
+}
+
+static gboolean
+__lambda9_ (void)
+{
+	WebKitWebInspector* inspector = NULL;
+	App* _tmp0_;
+	WebKitWebView* _tmp1_;
+	WebKitWebInspector* _tmp2_;
+	WebKitWebInspector* _tmp3_;
+	gboolean result;
+	_tmp0_ = app_application;
+	_tmp1_ = _tmp0_->webview;
+	_tmp2_ = webkit_web_view_get_inspector (_tmp1_);
+	_tmp3_ = _g_object_ref0 (_tmp2_);
+	inspector = _tmp3_;
+	webkit_web_inspector_show (inspector);
+	result = TRUE;
+	_g_object_unref0 (inspector);
+	return result;
+}
+
+static gboolean
+___lambda9__gsource_func (gpointer self)
+{
+	gboolean result;
+	result = __lambda9_ ();
+	return result;
+}
+
+void
+app_show_inspector (void)
+{
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda9__gsource_func, NULL, NULL);
 }
 
 App*

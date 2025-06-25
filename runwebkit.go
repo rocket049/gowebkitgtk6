@@ -89,3 +89,8 @@ func GetWebView() *C.WebKitWebView {
 func AppResize(w, h int) {
 	C.app_resize(C.int(w), C.int(h))
 }
+
+// show inspector
+func AppShowInspector() {
+	C.app_show_inspector()
+}

@@ -108,6 +108,9 @@ public class App: GLib.Object {
             return false;
         });
 
+        var settings = this.webview.get_settings();
+        settings.set("enable-developer_extras",true,null);
+
         win.present();
         this.win=win;
     }
@@ -148,5 +151,13 @@ public class App: GLib.Object {
             }, 
             GLib.Priority.DEFAULT_IDLE);
         
+    }
+    public static void show_inspector(){
+        Idle.add(()=>{
+            var inspector= application.webview.get_inspector();
+            inspector.show();
+            return true;
+        },
+        GLib.Priority.DEFAULT_IDLE);
     }
 }
