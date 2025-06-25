@@ -14,6 +14,12 @@ extern void folder_select_dialog (const gchar* title,
 extern void file_save_dialog (const gchar* title,
                                const gchar* start);
 
+extern void multi_file_select(const gchar* title,
+                             const gchar* patten,
+                             const gchar* start);
+
+extern void multi_folder_select (const gchar* title,
+                               const gchar* start);
 */
 import "C"
 
@@ -50,12 +56,35 @@ func AppSelectFile(title, mimeType, startPath string) chan string {
 	return ret
 }
 
+// call gtk dialog to select multiple files
+func AppSelectMultiFile(title, mimeType, startPath string) chan string {
+	ret := make(chan string)
+	multiFileChan = ret
+
+	C.multi_file_select(C.CString(title),
+		C.CString(mimeType),
+		C.CString(startPath),
+	)
+
+	return ret
+}
+
 // call gtk dialog to select a folder
 func AppSelectFolder(title, startPath string) chan string {
 	ret := make(chan string)
 	folderChan = ret
 
 	C.folder_select_dialog(C.CString(title),
+		C.CString(startPath))
+	return ret
+}
+
+// call gtk dialog to select multiple folders
+func AppSelectMultiFolder(title, startPath string) chan string {
+	ret := make(chan string)
+	multiFolderChan = ret
+
+	C.multi_folder_select(C.CString(title),
 		C.CString(startPath))
 	return ret
 }

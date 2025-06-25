@@ -8,8 +8,8 @@
 #include <gtk/gtk.h>
 #include <gio/gio.h>
 #include <stdio.h>
-#include <webkit/webkit.h>
 #include <glib-object.h>
+#include <webkit/webkit.h>
 
 #if !defined(VALA_STRICT_C)
 #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ >= 14)
@@ -31,6 +31,8 @@ typedef struct _Block1Data Block1Data;
 #define _g_error_free0(var) ((var == NULL) ? NULL : (var = (g_error_free (var), NULL)))
 typedef struct _AppFileSaveDialogData AppFileSaveDialogData;
 typedef struct _AppFileSelectDialogData AppFileSelectDialogData;
+typedef struct _AppMultiFileSelectData AppMultiFileSelectData;
+typedef struct _AppMultiFolderSelectData AppMultiFolderSelectData;
 typedef struct _AppFolderSelectDialogData AppFolderSelectDialogData;
 typedef struct _Block2Data Block2Data;
 typedef struct _Block3Data Block3Data;
@@ -110,6 +112,108 @@ struct _AppFileSelectDialogData {
 	GError* _inner_error0_;
 };
 
+struct _AppMultiFileSelectData {
+	int _state_;
+	GObject* _source_object_;
+	GAsyncResult* _res_;
+	GTask* _async_result;
+	gchar* title;
+	gchar* pattern;
+	gchar* start;
+	gchar* result;
+	GtkFileDialog* dlg;
+	GtkFileDialog* _tmp0_;
+	GtkFileDialog* _tmp1_;
+	GtkFileDialog* _tmp2_;
+	GtkFileFilter* filter;
+	GtkFileFilter* _tmp3_;
+	GtkFileFilter* _tmp4_;
+	GtkFileDialog* _tmp5_;
+	GtkFileFilter* _tmp6_;
+	GFile* folder;
+	GFile* _tmp7_;
+	GtkFileDialog* _tmp8_;
+	GFile* _tmp9_;
+	GListModel* res;
+	GtkFileDialog* _tmp10_;
+	App* _tmp11_;
+	GtkWindow* _tmp12_;
+	GListModel* _tmp13_;
+	gchar** ret;
+	GListModel* _tmp14_;
+	gchar** _tmp15_;
+	gint ret_length1;
+	gint _ret_size_;
+	gint i;
+	gboolean _tmp16_;
+	gint _tmp17_;
+	GListModel* _tmp18_;
+	GFile* f;
+	GListModel* _tmp19_;
+	GObject* _tmp20_;
+	gchar** _tmp21_;
+	gint _tmp21__length1;
+	GFile* _tmp22_;
+	gchar* _tmp23_;
+	gchar* _result_;
+	gchar** _tmp24_;
+	gint _tmp24__length1;
+	gchar* _tmp25_;
+	GError* e;
+	FILE* _tmp26_;
+	GError* _tmp27_;
+	const gchar* _tmp28_;
+	GError* _inner_error0_;
+};
+
+struct _AppMultiFolderSelectData {
+	int _state_;
+	GObject* _source_object_;
+	GAsyncResult* _res_;
+	GTask* _async_result;
+	gchar* title;
+	gchar* start;
+	gchar* result;
+	GtkFileDialog* dlg;
+	GtkFileDialog* _tmp0_;
+	GtkFileDialog* _tmp1_;
+	GtkFileDialog* _tmp2_;
+	GFile* folder;
+	GFile* _tmp3_;
+	GtkFileDialog* _tmp4_;
+	GFile* _tmp5_;
+	GListModel* res;
+	GtkFileDialog* _tmp6_;
+	App* _tmp7_;
+	GtkWindow* _tmp8_;
+	GListModel* _tmp9_;
+	gchar** ret;
+	GListModel* _tmp10_;
+	gchar** _tmp11_;
+	gint ret_length1;
+	gint _ret_size_;
+	gint i;
+	gboolean _tmp12_;
+	gint _tmp13_;
+	GListModel* _tmp14_;
+	GFile* f;
+	GListModel* _tmp15_;
+	GObject* _tmp16_;
+	gchar** _tmp17_;
+	gint _tmp17__length1;
+	GFile* _tmp18_;
+	gchar* _tmp19_;
+	gchar* _result_;
+	gchar** _tmp20_;
+	gint _tmp20__length1;
+	gchar* _tmp21_;
+	GError* e;
+	FILE* _tmp22_;
+	GError* _tmp23_;
+	const gchar* _tmp24_;
+	GError* _inner_error0_;
+};
+
 struct _AppFolderSelectDialogData {
 	int _state_;
 	GObject* _source_object_;
@@ -173,6 +277,16 @@ static gboolean app_file_select_dialog_co (AppFileSelectDialogData* _data_);
 static void app_file_select_dialog_ready (GObject* source_object,
                                    GAsyncResult* _res_,
                                    gpointer _user_data_);
+static void app_multi_file_select_data_free (gpointer _data);
+static gboolean app_multi_file_select_co (AppMultiFileSelectData* _data_);
+static void app_multi_file_select_ready (GObject* source_object,
+                                  GAsyncResult* _res_,
+                                  gpointer _user_data_);
+static void app_multi_folder_select_data_free (gpointer _data);
+static gboolean app_multi_folder_select_co (AppMultiFolderSelectData* _data_);
+static void app_multi_folder_select_ready (GObject* source_object,
+                                    GAsyncResult* _res_,
+                                    gpointer _user_data_);
 static void app_folder_select_dialog_data_free (gpointer _data);
 static gboolean app_folder_select_dialog_co (AppFolderSelectDialogData* _data_);
 static void app_folder_select_dialog_ready (GObject* source_object,
@@ -206,6 +320,12 @@ static void ___lambda10__webkit_web_inspector_closed (WebKitWebInspector* _sende
 static gboolean ___lambda9__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
+static void _vala_array_destroy (gpointer array,
+                          gssize array_length,
+                          GDestroyNotify destroy_func);
+static void _vala_array_free (gpointer array,
+                       gssize array_length,
+                       GDestroyNotify destroy_func);
 
 static inline gpointer
 app_get_instance_private (App* self)
@@ -568,6 +688,533 @@ app_file_select_dialog_co (AppFileSelectDialogData* _data_)
 		_data_->_tmp16_ = _data_->e;
 		_data_->_tmp17_ = _data_->_tmp16_->message;
 		fputs (_data_->_tmp17_, _data_->_tmp15_);
+		_data_->result = NULL;
+		_g_error_free0 (_data_->e);
+		_g_object_unref0 (_data_->dlg);
+		g_task_return_pointer (_data_->_async_result, _data_, NULL);
+		if (_data_->_state_ != 0) {
+			while (!g_task_get_completed (_data_->_async_result)) {
+				g_main_context_iteration (g_task_get_context (_data_->_async_result), TRUE);
+			}
+		}
+		g_object_unref (_data_->_async_result);
+		return FALSE;
+	}
+	__finally0:
+	_g_object_unref0 (_data_->dlg);
+	g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _data_->_inner_error0_->message, g_quark_to_string (_data_->_inner_error0_->domain), _data_->_inner_error0_->code);
+	g_clear_error (&_data_->_inner_error0_);
+	g_object_unref (_data_->_async_result);
+	return FALSE;
+}
+
+static void
+app_multi_file_select_data_free (gpointer _data)
+{
+	AppMultiFileSelectData* _data_;
+	_data_ = _data;
+	_g_free0 (_data_->title);
+	_g_free0 (_data_->pattern);
+	_g_free0 (_data_->start);
+	_g_free0 (_data_->result);
+	g_slice_free (AppMultiFileSelectData, _data_);
+}
+
+void
+app_multi_file_select (const gchar* title,
+                       const gchar* pattern,
+                       const gchar* start,
+                       GAsyncReadyCallback _callback_,
+                       gpointer _user_data_)
+{
+	AppMultiFileSelectData* _data_;
+	gchar* _tmp0_;
+	gchar* _tmp1_;
+	gchar* _tmp2_;
+	g_return_if_fail (title != NULL);
+	_data_ = g_slice_new0 (AppMultiFileSelectData);
+	_data_->_async_result = g_task_new (NULL, NULL, _callback_, _user_data_);
+	g_task_set_task_data (_data_->_async_result, _data_, app_multi_file_select_data_free);
+	_tmp0_ = g_strdup (title);
+	_g_free0 (_data_->title);
+	_data_->title = _tmp0_;
+	_tmp1_ = g_strdup (pattern);
+	_g_free0 (_data_->pattern);
+	_data_->pattern = _tmp1_;
+	_tmp2_ = g_strdup (start);
+	_g_free0 (_data_->start);
+	_data_->start = _tmp2_;
+	app_multi_file_select_co (_data_);
+}
+
+gchar*
+app_multi_file_select_finish (GAsyncResult* _res_)
+{
+	gchar* result;
+	AppMultiFileSelectData* _data_;
+	_data_ = g_task_propagate_pointer (G_TASK (_res_), NULL);
+	result = _data_->result;
+	_data_->result = NULL;
+	return result;
+}
+
+static void
+app_multi_file_select_ready (GObject* source_object,
+                             GAsyncResult* _res_,
+                             gpointer _user_data_)
+{
+	AppMultiFileSelectData* _data_;
+	_data_ = _user_data_;
+	_data_->_source_object_ = source_object;
+	_data_->_res_ = _res_;
+	app_multi_file_select_co (_data_);
+}
+
+static gchar*
+_vala_g_strjoinv (const gchar* separator,
+                  gchar** str_array,
+                  gint str_array_length1)
+{
+	gboolean _tmp0_ = FALSE;
+	gchar* result;
+	if (separator == NULL) {
+		separator = "";
+	}
+	if (str_array != NULL) {
+		gboolean _tmp1_ = FALSE;
+		if (str_array_length1 > 0) {
+			_tmp1_ = TRUE;
+		} else {
+			gboolean _tmp2_ = FALSE;
+			if (str_array_length1 == -1) {
+				const gchar* _tmp3_;
+				_tmp3_ = str_array[0];
+				_tmp2_ = _tmp3_ != NULL;
+			} else {
+				_tmp2_ = FALSE;
+			}
+			_tmp1_ = _tmp2_;
+		}
+		_tmp0_ = _tmp1_;
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		gint i = 0;
+		gsize len = 0UL;
+		gint _tmp16_;
+		gint _tmp17_;
+		const gchar* res = NULL;
+		void* _tmp18_;
+		const gchar* _tmp19_ = NULL;
+		const gchar* _tmp20_;
+		void* ptr = NULL;
+		const gchar* _tmp22_;
+		void* _tmp23_;
+		const gchar* _tmp33_;
+		len = (gsize) 1;
+		{
+			gboolean _tmp4_ = FALSE;
+			i = 0;
+			_tmp4_ = TRUE;
+			while (TRUE) {
+				gboolean _tmp6_ = FALSE;
+				gboolean _tmp7_ = FALSE;
+				gint _tmp10_ = 0;
+				const gchar* _tmp11_;
+				if (!_tmp4_) {
+					gint _tmp5_;
+					_tmp5_ = i;
+					i = _tmp5_ + 1;
+				}
+				_tmp4_ = FALSE;
+				if (str_array_length1 != -1) {
+					_tmp7_ = i < str_array_length1;
+				} else {
+					_tmp7_ = FALSE;
+				}
+				if (_tmp7_) {
+					_tmp6_ = TRUE;
+				} else {
+					gboolean _tmp8_ = FALSE;
+					if (str_array_length1 == -1) {
+						const gchar* _tmp9_;
+						_tmp9_ = str_array[i];
+						_tmp8_ = _tmp9_ != NULL;
+					} else {
+						_tmp8_ = FALSE;
+					}
+					_tmp6_ = _tmp8_;
+				}
+				if (!_tmp6_) {
+					break;
+				}
+				_tmp11_ = str_array[i];
+				if (_tmp11_ != NULL) {
+					const gchar* _tmp12_;
+					gint _tmp13_;
+					gint _tmp14_;
+					_tmp12_ = str_array[i];
+					_tmp13_ = strlen ((const gchar*) _tmp12_);
+					_tmp14_ = _tmp13_;
+					_tmp10_ = _tmp14_;
+				} else {
+					_tmp10_ = 0;
+				}
+				len += (gsize) _tmp10_;
+			}
+		}
+		if (i == 0) {
+			gchar* _tmp15_;
+			_tmp15_ = g_strdup ("");
+			result = _tmp15_;
+			return result;
+		}
+		str_array_length1 = i;
+		_tmp16_ = strlen ((const gchar*) separator);
+		_tmp17_ = _tmp16_;
+		len += (gsize) (_tmp17_ * (i - 1));
+		_tmp18_ = g_malloc (len);
+		res = _tmp18_;
+		_tmp20_ = str_array[0];
+		if (_tmp20_ != NULL) {
+			const gchar* _tmp21_;
+			_tmp21_ = str_array[0];
+			_tmp19_ = (const gchar*) _tmp21_;
+		} else {
+			_tmp19_ = "";
+		}
+		_tmp22_ = res;
+		_tmp23_ = g_stpcpy ((void*) _tmp22_, _tmp19_);
+		ptr = _tmp23_;
+		{
+			gboolean _tmp24_ = FALSE;
+			i = 1;
+			_tmp24_ = TRUE;
+			while (TRUE) {
+				void* _tmp26_;
+				void* _tmp27_;
+				const gchar* _tmp28_ = NULL;
+				const gchar* _tmp29_;
+				void* _tmp31_;
+				void* _tmp32_;
+				if (!_tmp24_) {
+					gint _tmp25_;
+					_tmp25_ = i;
+					i = _tmp25_ + 1;
+				}
+				_tmp24_ = FALSE;
+				if (!(i < str_array_length1)) {
+					break;
+				}
+				_tmp26_ = ptr;
+				_tmp27_ = g_stpcpy (_tmp26_, (const gchar*) separator);
+				ptr = _tmp27_;
+				_tmp29_ = str_array[i];
+				if (_tmp29_ != NULL) {
+					const gchar* _tmp30_;
+					_tmp30_ = str_array[i];
+					_tmp28_ = (const gchar*) _tmp30_;
+				} else {
+					_tmp28_ = "";
+				}
+				_tmp31_ = ptr;
+				_tmp32_ = g_stpcpy (_tmp31_, _tmp28_);
+				ptr = _tmp32_;
+			}
+		}
+		_tmp33_ = res;
+		res = NULL;
+		result = (gchar*) _tmp33_;
+		return result;
+	} else {
+		gchar* _tmp34_;
+		_tmp34_ = g_strdup ("");
+		result = _tmp34_;
+		return result;
+	}
+}
+
+static gboolean
+app_multi_file_select_co (AppMultiFileSelectData* _data_)
+{
+	switch (_data_->_state_) {
+		case 0:
+		goto _state_0;
+		case 1:
+		goto _state_1;
+		default:
+		g_assert_not_reached ();
+	}
+	_state_0:
+	_data_->_tmp0_ = gtk_file_dialog_new ();
+	_data_->dlg = _data_->_tmp0_;
+	_data_->_tmp1_ = _data_->dlg;
+	gtk_file_dialog_set_modal (_data_->_tmp1_, TRUE);
+	_data_->_tmp2_ = _data_->dlg;
+	gtk_file_dialog_set_title (_data_->_tmp2_, _data_->title);
+	if (_data_->pattern != NULL) {
+		_data_->_tmp3_ = gtk_file_filter_new ();
+		_data_->filter = _data_->_tmp3_;
+		_data_->_tmp4_ = _data_->filter;
+		gtk_file_filter_add_pattern (_data_->_tmp4_, _data_->pattern);
+		_data_->_tmp5_ = _data_->dlg;
+		_data_->_tmp6_ = _data_->filter;
+		gtk_file_dialog_set_default_filter (_data_->_tmp5_, _data_->_tmp6_);
+		_g_object_unref0 (_data_->filter);
+	}
+	if (_data_->start != NULL) {
+		_data_->_tmp7_ = g_file_new_for_path (_data_->start);
+		_data_->folder = _data_->_tmp7_;
+		_data_->_tmp8_ = _data_->dlg;
+		_data_->_tmp9_ = _data_->folder;
+		gtk_file_dialog_set_initial_folder (_data_->_tmp8_, _data_->_tmp9_);
+		_g_object_unref0 (_data_->folder);
+	}
+	{
+		_data_->_tmp10_ = _data_->dlg;
+		_data_->_tmp11_ = app_application;
+		_data_->_tmp12_ = _data_->_tmp11_->win;
+		_data_->_state_ = 1;
+		gtk_file_dialog_open_multiple (_data_->_tmp10_, _data_->_tmp12_, NULL, app_multi_file_select_ready, _data_);
+		return FALSE;
+		_state_1:
+		_data_->_tmp13_ = gtk_file_dialog_open_multiple_finish (_data_->_tmp10_, _data_->_res_, &_data_->_inner_error0_);
+		_data_->res = _data_->_tmp13_;
+		if (G_UNLIKELY (_data_->_inner_error0_ != NULL)) {
+			goto __catch0_g_error;
+		}
+		_data_->_tmp14_ = _data_->res;
+		_data_->_tmp15_ = g_new0 (gchar*, g_list_model_get_n_items (_data_->_tmp14_) + 1);
+		_data_->ret = _data_->_tmp15_;
+		_data_->ret_length1 = g_list_model_get_n_items (_data_->_tmp14_);
+		_data_->_ret_size_ = _data_->ret_length1;
+		{
+			_data_->i = 0;
+			{
+				_data_->_tmp16_ = TRUE;
+				while (TRUE) {
+					if (!_data_->_tmp16_) {
+						_data_->_tmp17_ = _data_->i;
+						_data_->i = _data_->_tmp17_ + 1;
+					}
+					_data_->_tmp16_ = FALSE;
+					_data_->_tmp18_ = _data_->res;
+					if (!(((guint) _data_->i) < g_list_model_get_n_items (_data_->_tmp18_))) {
+						break;
+					}
+					_data_->_tmp19_ = _data_->res;
+					_data_->_tmp20_ = g_list_model_get_item (_data_->_tmp19_, (guint) _data_->i);
+					_data_->f = G_TYPE_CHECK_INSTANCE_CAST (_data_->_tmp20_, g_file_get_type (), GFile);
+					_data_->_tmp21_ = _data_->ret;
+					_data_->_tmp21__length1 = _data_->ret_length1;
+					_data_->_tmp22_ = _data_->f;
+					_data_->_tmp23_ = g_file_get_path (_data_->_tmp22_);
+					_g_free0 (_data_->_tmp21_[_data_->i]);
+					_data_->_tmp21_[_data_->i] = _data_->_tmp23_;
+					_g_object_unref0 (_data_->f);
+				}
+			}
+		}
+		_data_->_tmp24_ = _data_->ret;
+		_data_->_tmp24__length1 = _data_->ret_length1;
+		_data_->_tmp25_ = _vala_g_strjoinv (":", _data_->_tmp24_, (gint) _data_->_tmp24__length1);
+		_data_->_result_ = _data_->_tmp25_;
+		_data_->result = _data_->_result_;
+		_data_->ret = (_vala_array_free (_data_->ret, _data_->ret_length1, (GDestroyNotify) g_free), NULL);
+		_g_object_unref0 (_data_->res);
+		_g_object_unref0 (_data_->dlg);
+		g_task_return_pointer (_data_->_async_result, _data_, NULL);
+		if (_data_->_state_ != 0) {
+			while (!g_task_get_completed (_data_->_async_result)) {
+				g_main_context_iteration (g_task_get_context (_data_->_async_result), TRUE);
+			}
+		}
+		g_object_unref (_data_->_async_result);
+		return FALSE;
+	}
+	goto __finally0;
+	__catch0_g_error:
+	{
+		_data_->e = _data_->_inner_error0_;
+		_data_->_inner_error0_ = NULL;
+		_data_->_tmp26_ = stderr;
+		_data_->_tmp27_ = _data_->e;
+		_data_->_tmp28_ = _data_->_tmp27_->message;
+		fputs (_data_->_tmp28_, _data_->_tmp26_);
+		_data_->result = NULL;
+		_g_error_free0 (_data_->e);
+		_g_object_unref0 (_data_->dlg);
+		g_task_return_pointer (_data_->_async_result, _data_, NULL);
+		if (_data_->_state_ != 0) {
+			while (!g_task_get_completed (_data_->_async_result)) {
+				g_main_context_iteration (g_task_get_context (_data_->_async_result), TRUE);
+			}
+		}
+		g_object_unref (_data_->_async_result);
+		return FALSE;
+	}
+	__finally0:
+	_g_object_unref0 (_data_->dlg);
+	g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _data_->_inner_error0_->message, g_quark_to_string (_data_->_inner_error0_->domain), _data_->_inner_error0_->code);
+	g_clear_error (&_data_->_inner_error0_);
+	g_object_unref (_data_->_async_result);
+	return FALSE;
+}
+
+static void
+app_multi_folder_select_data_free (gpointer _data)
+{
+	AppMultiFolderSelectData* _data_;
+	_data_ = _data;
+	_g_free0 (_data_->title);
+	_g_free0 (_data_->start);
+	_g_free0 (_data_->result);
+	g_slice_free (AppMultiFolderSelectData, _data_);
+}
+
+void
+app_multi_folder_select (const gchar* title,
+                         const gchar* start,
+                         GAsyncReadyCallback _callback_,
+                         gpointer _user_data_)
+{
+	AppMultiFolderSelectData* _data_;
+	gchar* _tmp0_;
+	gchar* _tmp1_;
+	g_return_if_fail (title != NULL);
+	_data_ = g_slice_new0 (AppMultiFolderSelectData);
+	_data_->_async_result = g_task_new (NULL, NULL, _callback_, _user_data_);
+	g_task_set_task_data (_data_->_async_result, _data_, app_multi_folder_select_data_free);
+	_tmp0_ = g_strdup (title);
+	_g_free0 (_data_->title);
+	_data_->title = _tmp0_;
+	_tmp1_ = g_strdup (start);
+	_g_free0 (_data_->start);
+	_data_->start = _tmp1_;
+	app_multi_folder_select_co (_data_);
+}
+
+gchar*
+app_multi_folder_select_finish (GAsyncResult* _res_)
+{
+	gchar* result;
+	AppMultiFolderSelectData* _data_;
+	_data_ = g_task_propagate_pointer (G_TASK (_res_), NULL);
+	result = _data_->result;
+	_data_->result = NULL;
+	return result;
+}
+
+static void
+app_multi_folder_select_ready (GObject* source_object,
+                               GAsyncResult* _res_,
+                               gpointer _user_data_)
+{
+	AppMultiFolderSelectData* _data_;
+	_data_ = _user_data_;
+	_data_->_source_object_ = source_object;
+	_data_->_res_ = _res_;
+	app_multi_folder_select_co (_data_);
+}
+
+static gboolean
+app_multi_folder_select_co (AppMultiFolderSelectData* _data_)
+{
+	switch (_data_->_state_) {
+		case 0:
+		goto _state_0;
+		case 1:
+		goto _state_1;
+		default:
+		g_assert_not_reached ();
+	}
+	_state_0:
+	_data_->_tmp0_ = gtk_file_dialog_new ();
+	_data_->dlg = _data_->_tmp0_;
+	_data_->_tmp1_ = _data_->dlg;
+	gtk_file_dialog_set_modal (_data_->_tmp1_, TRUE);
+	_data_->_tmp2_ = _data_->dlg;
+	gtk_file_dialog_set_title (_data_->_tmp2_, _data_->title);
+	if (_data_->start != NULL) {
+		_data_->_tmp3_ = g_file_new_for_path (_data_->start);
+		_data_->folder = _data_->_tmp3_;
+		_data_->_tmp4_ = _data_->dlg;
+		_data_->_tmp5_ = _data_->folder;
+		gtk_file_dialog_set_initial_folder (_data_->_tmp4_, _data_->_tmp5_);
+		_g_object_unref0 (_data_->folder);
+	}
+	{
+		_data_->_tmp6_ = _data_->dlg;
+		_data_->_tmp7_ = app_application;
+		_data_->_tmp8_ = _data_->_tmp7_->win;
+		_data_->_state_ = 1;
+		gtk_file_dialog_select_multiple_folders (_data_->_tmp6_, _data_->_tmp8_, NULL, app_multi_folder_select_ready, _data_);
+		return FALSE;
+		_state_1:
+		_data_->_tmp9_ = gtk_file_dialog_select_multiple_folders_finish (_data_->_tmp6_, _data_->_res_, &_data_->_inner_error0_);
+		_data_->res = _data_->_tmp9_;
+		if (G_UNLIKELY (_data_->_inner_error0_ != NULL)) {
+			goto __catch0_g_error;
+		}
+		_data_->_tmp10_ = _data_->res;
+		_data_->_tmp11_ = g_new0 (gchar*, g_list_model_get_n_items (_data_->_tmp10_) + 1);
+		_data_->ret = _data_->_tmp11_;
+		_data_->ret_length1 = g_list_model_get_n_items (_data_->_tmp10_);
+		_data_->_ret_size_ = _data_->ret_length1;
+		{
+			_data_->i = 0;
+			{
+				_data_->_tmp12_ = TRUE;
+				while (TRUE) {
+					if (!_data_->_tmp12_) {
+						_data_->_tmp13_ = _data_->i;
+						_data_->i = _data_->_tmp13_ + 1;
+					}
+					_data_->_tmp12_ = FALSE;
+					_data_->_tmp14_ = _data_->res;
+					if (!(((guint) _data_->i) < g_list_model_get_n_items (_data_->_tmp14_))) {
+						break;
+					}
+					_data_->_tmp15_ = _data_->res;
+					_data_->_tmp16_ = g_list_model_get_item (_data_->_tmp15_, (guint) _data_->i);
+					_data_->f = G_TYPE_CHECK_INSTANCE_CAST (_data_->_tmp16_, g_file_get_type (), GFile);
+					_data_->_tmp17_ = _data_->ret;
+					_data_->_tmp17__length1 = _data_->ret_length1;
+					_data_->_tmp18_ = _data_->f;
+					_data_->_tmp19_ = g_file_get_path (_data_->_tmp18_);
+					_g_free0 (_data_->_tmp17_[_data_->i]);
+					_data_->_tmp17_[_data_->i] = _data_->_tmp19_;
+					_g_object_unref0 (_data_->f);
+				}
+			}
+		}
+		_data_->_tmp20_ = _data_->ret;
+		_data_->_tmp20__length1 = _data_->ret_length1;
+		_data_->_tmp21_ = _vala_g_strjoinv (":", _data_->_tmp20_, (gint) _data_->_tmp20__length1);
+		_data_->_result_ = _data_->_tmp21_;
+		_data_->result = _data_->_result_;
+		_data_->ret = (_vala_array_free (_data_->ret, _data_->ret_length1, (GDestroyNotify) g_free), NULL);
+		_g_object_unref0 (_data_->res);
+		_g_object_unref0 (_data_->dlg);
+		g_task_return_pointer (_data_->_async_result, _data_, NULL);
+		if (_data_->_state_ != 0) {
+			while (!g_task_get_completed (_data_->_async_result)) {
+				g_main_context_iteration (g_task_get_context (_data_->_async_result), TRUE);
+			}
+		}
+		g_object_unref (_data_->_async_result);
+		return FALSE;
+	}
+	goto __finally0;
+	__catch0_g_error:
+	{
+		_data_->e = _data_->_inner_error0_;
+		_data_->_inner_error0_ = NULL;
+		_data_->_tmp22_ = stderr;
+		_data_->_tmp23_ = _data_->e;
+		_data_->_tmp24_ = _data_->_tmp23_->message;
+		fputs (_data_->_tmp24_, _data_->_tmp22_);
 		_data_->result = NULL;
 		_g_error_free0 (_data_->e);
 		_g_object_unref0 (_data_->dlg);
@@ -1131,5 +1778,29 @@ app_get_type (void)
 		g_once_init_leave (&app_type_id__once, app_type_id);
 	}
 	return app_type_id__once;
+}
+
+static void
+_vala_array_destroy (gpointer array,
+                     gssize array_length,
+                     GDestroyNotify destroy_func)
+{
+	if ((array != NULL) && (destroy_func != NULL)) {
+		gssize i;
+		for (i = 0; i < array_length; i = i + 1) {
+			if (((gpointer*) array)[i] != NULL) {
+				destroy_func (((gpointer*) array)[i]);
+			}
+		}
+	}
+}
+
+static void
+_vala_array_free (gpointer array,
+                  gssize array_length,
+                  GDestroyNotify destroy_func)
+{
+	_vala_array_destroy (array, array_length, destroy_func);
+	g_free (array);
 }
 

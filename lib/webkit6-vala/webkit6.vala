@@ -66,6 +66,63 @@ public class App: GLib.Object {
         }
         
     }
+
+    public static async string? multi_file_select(string title, string? pattern, string? start){
+        var dlg = new Gtk.FileDialog();
+        
+        dlg.set_modal(true);
+        dlg.set_title(title);
+        if( pattern != null ) {
+            var filter= new Gtk.FileFilter();
+            filter.add_pattern(pattern);
+            dlg.set_default_filter(filter);
+        }
+        if( start != null ){
+            var folder= GLib.File.new_for_path(start);
+            dlg.set_initial_folder(folder);
+        }
+        try{
+            var res = yield dlg.open_multiple(App.application.win, null);
+            string[] ret = new string[res.get_n_items()];
+            for(var i=0;i<res.get_n_items();i++) {
+                var f =(GLib.File)res.get_item(i);
+                ret[i] = f.get_path();
+            }
+            var result = string.joinv(":", ret);
+            //App.application.callback(result);
+            return result;
+        }catch (GLib.Error e) {
+            stderr.puts(e.message);
+            return null;
+        }
+    }
+
+    public static async string? multi_folder_select(string title, string? start){
+        var dlg = new Gtk.FileDialog();
+        
+        dlg.set_modal(true);
+        dlg.set_title(title);
+
+        if( start != null ){
+            var folder= GLib.File.new_for_path(start);
+            dlg.set_initial_folder(folder);
+        }
+        try{
+            var res = yield dlg.select_multiple_folders(App.application.win, null);
+            string[] ret = new string[res.get_n_items()];
+            for(var i=0;i<res.get_n_items();i++) {
+                var f =(GLib.File)res.get_item(i);
+                ret[i] = f.get_path();
+            }
+            var result = string.joinv(":", ret);
+
+            return result;
+        }catch (GLib.Error e) {
+            stderr.puts(e.message);
+            return null;
+        }
+        
+    }
     
     public static async string? folder_select_dialog(string title,  string? start){
             var dlg = new Gtk.FileDialog();
@@ -163,4 +220,5 @@ public class App: GLib.Object {
         },
         GLib.Priority.DEFAULT_IDLE);
     }
+    
 }

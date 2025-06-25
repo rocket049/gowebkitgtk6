@@ -65,6 +65,17 @@ VALA_EXTERN void app_file_select_dialog (const gchar* title,
                              GAsyncReadyCallback _callback_,
                              gpointer _user_data_);
 VALA_EXTERN gchar* app_file_select_dialog_finish (GAsyncResult* _res_);
+VALA_EXTERN void app_multi_file_select (const gchar* title,
+                            const gchar* pattern,
+                            const gchar* start,
+                            GAsyncReadyCallback _callback_,
+                            gpointer _user_data_);
+VALA_EXTERN gchar* app_multi_file_select_finish (GAsyncResult* _res_);
+VALA_EXTERN void app_multi_folder_select (const gchar* title,
+                              const gchar* start,
+                              GAsyncReadyCallback _callback_,
+                              gpointer _user_data_);
+VALA_EXTERN gchar* app_multi_folder_select_finish (GAsyncResult* _res_);
 VALA_EXTERN void app_folder_select_dialog (const gchar* title,
                                const gchar* start,
                                GAsyncReadyCallback _callback_,
