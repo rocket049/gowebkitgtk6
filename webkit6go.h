@@ -81,7 +81,6 @@ VALA_EXTERN WebKitWebView* app_get_webview (void);
 VALA_EXTERN void app_resize (gint w,
                  gint h);
 VALA_EXTERN void app_show_inspector (void);
-VALA_EXTERN void app_close_inspector (void);
 VALA_EXTERN App* app_new (void);
 VALA_EXTERN App* app_construct (GType object_type);
 

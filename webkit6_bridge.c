@@ -1,5 +1,6 @@
 #include "glib.h"
 #include "webkit6go.h"
+#include <stdlib.h>
 
 struct user_data_cb {
     const gchar *title;
@@ -10,6 +11,14 @@ struct user_data_cb {
 extern void WriteFolderPath(char *);
 extern void WriteFilePath(char *);
 extern void WriteSavePath(char *);
+
+void free_user_data(struct user_data_cb *p){
+    if (p==NULL) return;
+    if (p->title != NULL) free( (void*) p->title );
+    if (p->start != NULL ) free( (void*) p->start );
+    if (p->patten != NULL) free( (void*) p->patten );
+    g_free( (void*)p );
+}
 
 static void save_callback(GObject *src, GAsyncResult* _res_, gpointer user_data){
 	char* res = (char*)app_file_save_dialog_finish( _res_);
@@ -54,7 +63,7 @@ void file_select_dialog(const gchar* title,
     data->title = title;
     data->patten = patten;
     data->start = start;
-	g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_open_file_dialog_cb, (void*)data, g_free );
+	g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_open_file_dialog_cb, (void*)data, (GDestroyNotify)free_user_data );
 }
 
 void folder_select_dialog (const gchar* title,
@@ -64,7 +73,7 @@ void folder_select_dialog (const gchar* title,
     data->title = title;
     data->patten = NULL;
     data->start = start;
-    g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_select_folder_dialog_cb,  (void*)data, g_free );
+    g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_select_folder_dialog_cb,  (void*)data, (GDestroyNotify)free_user_data );
 }
 
 void file_save_dialog (const gchar* title,
@@ -74,5 +83,5 @@ void file_save_dialog (const gchar* title,
     data->title = title;
     data->patten = NULL;
     data->start = start;
-    g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_save_file_dialog_cb,  (void*)data, g_free );
+    g_idle_add_full( G_PRIORITY_DEFAULT_IDLE, (GSourceFunc)wrap_save_file_dialog_cb,  (void*)data, (GDestroyNotify)free_user_data );
 }

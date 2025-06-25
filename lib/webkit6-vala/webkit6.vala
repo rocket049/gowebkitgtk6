@@ -147,7 +147,7 @@ public class App: GLib.Object {
         Idle.add(
             ()=>{
                 application.win.set_size_request(w, h);
-                return true;
+                return false;
             }, 
             GLib.Priority.DEFAULT_IDLE);
         
@@ -155,16 +155,11 @@ public class App: GLib.Object {
     public static void show_inspector(){
         Idle.add(()=>{
             var inspector= application.webview.get_inspector();
+            inspector.closed.connect(()=>{
+                inspector.close();
+            });
             inspector.show();
-            return true;
-        },
-        GLib.Priority.DEFAULT_IDLE);
-    }
-    public static void close_inspector(){
-        Idle.add(()=>{
-            var inspector= application.webview.get_inspector();
-            inspector.close();
-            return true;
+            return false;
         },
         GLib.Priority.DEFAULT_IDLE);
     }

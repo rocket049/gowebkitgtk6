@@ -94,8 +94,3 @@ func AppResize(w, h int) {
 func AppShowInspector() {
 	C.app_show_inspector()
 }
-
-// close inspector
-func AppCloseInspector() {
-	C.app_close_inspector()
-}

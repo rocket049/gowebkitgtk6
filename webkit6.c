@@ -33,6 +33,7 @@ typedef struct _AppFileSaveDialogData AppFileSaveDialogData;
 typedef struct _AppFileSelectDialogData AppFileSelectDialogData;
 typedef struct _AppFolderSelectDialogData AppFolderSelectDialogData;
 typedef struct _Block2Data Block2Data;
+typedef struct _Block3Data Block3Data;
 
 struct _AppPrivate {
 	gchar* home_url;
@@ -144,6 +145,11 @@ struct _Block2Data {
 	gint h;
 };
 
+struct _Block3Data {
+	int _ref_count_;
+	WebKitWebInspector* inspector;
+};
+
 static gint App_private_offset;
 static gpointer app_parent_class = NULL;
 App* app_application = NULL;
@@ -192,9 +198,12 @@ static void block2_data_unref (void * _userdata_);
 static gboolean __lambda8_ (Block2Data* _data2_);
 static gboolean ___lambda8__gsource_func (gpointer self);
 static gboolean __lambda9_ (void);
+static Block3Data* block3_data_ref (Block3Data* _data3_);
+static void block3_data_unref (void * _userdata_);
+static void __lambda10_ (Block3Data* _data3_);
+static void ___lambda10__webkit_web_inspector_closed (WebKitWebInspector* _sender,
+                                               gpointer self);
 static gboolean ___lambda9__gsource_func (gpointer self);
-static gboolean __lambda10_ (void);
-static gboolean ___lambda10__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
 
@@ -964,7 +973,7 @@ __lambda8_ (Block2Data* _data2_)
 	_tmp0_ = app_application;
 	_tmp1_ = _tmp0_->win;
 	gtk_widget_set_size_request ((GtkWidget*) _tmp1_, _data2_->w, _data2_->h);
-	result = TRUE;
+	result = FALSE;
 	return result;
 }
 
@@ -990,23 +999,58 @@ app_resize (gint w,
 	_data2_ = NULL;
 }
 
+static Block3Data*
+block3_data_ref (Block3Data* _data3_)
+{
+	g_atomic_int_inc (&_data3_->_ref_count_);
+	return _data3_;
+}
+
+static void
+block3_data_unref (void * _userdata_)
+{
+	Block3Data* _data3_;
+	_data3_ = (Block3Data*) _userdata_;
+	if (g_atomic_int_dec_and_test (&_data3_->_ref_count_)) {
+		_g_object_unref0 (_data3_->inspector);
+		g_slice_free (Block3Data, _data3_);
+	}
+}
+
+static void
+__lambda10_ (Block3Data* _data3_)
+{
+	webkit_web_inspector_close (_data3_->inspector);
+}
+
+static void
+___lambda10__webkit_web_inspector_closed (WebKitWebInspector* _sender,
+                                          gpointer self)
+{
+	__lambda10_ (self);
+}
+
 static gboolean
 __lambda9_ (void)
 {
-	WebKitWebInspector* inspector = NULL;
+	Block3Data* _data3_;
 	App* _tmp0_;
 	WebKitWebView* _tmp1_;
 	WebKitWebInspector* _tmp2_;
 	WebKitWebInspector* _tmp3_;
 	gboolean result;
+	_data3_ = g_slice_new0 (Block3Data);
+	_data3_->_ref_count_ = 1;
 	_tmp0_ = app_application;
 	_tmp1_ = _tmp0_->webview;
 	_tmp2_ = webkit_web_view_get_inspector (_tmp1_);
 	_tmp3_ = _g_object_ref0 (_tmp2_);
-	inspector = _tmp3_;
-	webkit_web_inspector_show (inspector);
-	result = TRUE;
-	_g_object_unref0 (inspector);
+	_data3_->inspector = _tmp3_;
+	g_signal_connect_data (_data3_->inspector, "closed", (GCallback) ___lambda10__webkit_web_inspector_closed, block3_data_ref (_data3_), (GClosureNotify) block3_data_unref, 0);
+	webkit_web_inspector_show (_data3_->inspector);
+	result = FALSE;
+	block3_data_unref (_data3_);
+	_data3_ = NULL;
 	return result;
 }
 
@@ -1022,40 +1066,6 @@ void
 app_show_inspector (void)
 {
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda9__gsource_func, NULL, NULL);
-}
-
-static gboolean
-__lambda10_ (void)
-{
-	WebKitWebInspector* inspector = NULL;
-	App* _tmp0_;
-	WebKitWebView* _tmp1_;
-	WebKitWebInspector* _tmp2_;
-	WebKitWebInspector* _tmp3_;
-	gboolean result;
-	_tmp0_ = app_application;
-	_tmp1_ = _tmp0_->webview;
-	_tmp2_ = webkit_web_view_get_inspector (_tmp1_);
-	_tmp3_ = _g_object_ref0 (_tmp2_);
-	inspector = _tmp3_;
-	webkit_web_inspector_close (inspector);
-	result = TRUE;
-	_g_object_unref0 (inspector);
-	return result;
-}
-
-static gboolean
-___lambda10__gsource_func (gpointer self)
-{
-	gboolean result;
-	result = __lambda10_ ();
-	return result;
-}
-
-void
-app_close_inspector (void)
-{
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda10__gsource_func, NULL, NULL);
 }
 
 App*
