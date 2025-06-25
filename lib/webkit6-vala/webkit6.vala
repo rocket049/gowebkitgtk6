@@ -160,4 +160,12 @@ public class App: GLib.Object {
         },
         GLib.Priority.DEFAULT_IDLE);
     }
+    public static void close_inspector(){
+        Idle.add(()=>{
+            var inspector= application.webview.get_inspector();
+            inspector.close();
+            return true;
+        },
+        GLib.Priority.DEFAULT_IDLE);
+    }
 }

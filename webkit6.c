@@ -193,6 +193,8 @@ static gboolean __lambda8_ (Block2Data* _data2_);
 static gboolean ___lambda8__gsource_func (gpointer self);
 static gboolean __lambda9_ (void);
 static gboolean ___lambda9__gsource_func (gpointer self);
+static gboolean __lambda10_ (void);
+static gboolean ___lambda10__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
 
@@ -1020,6 +1022,40 @@ void
 app_show_inspector (void)
 {
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda9__gsource_func, NULL, NULL);
+}
+
+static gboolean
+__lambda10_ (void)
+{
+	WebKitWebInspector* inspector = NULL;
+	App* _tmp0_;
+	WebKitWebView* _tmp1_;
+	WebKitWebInspector* _tmp2_;
+	WebKitWebInspector* _tmp3_;
+	gboolean result;
+	_tmp0_ = app_application;
+	_tmp1_ = _tmp0_->webview;
+	_tmp2_ = webkit_web_view_get_inspector (_tmp1_);
+	_tmp3_ = _g_object_ref0 (_tmp2_);
+	inspector = _tmp3_;
+	webkit_web_inspector_close (inspector);
+	result = TRUE;
+	_g_object_unref0 (inspector);
+	return result;
+}
+
+static gboolean
+___lambda10__gsource_func (gpointer self)
+{
+	gboolean result;
+	result = __lambda10_ ();
+	return result;
+}
+
+void
+app_close_inspector (void)
+{
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda10__gsource_func, NULL, NULL);
 }
 
 App*
