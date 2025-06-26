@@ -7,6 +7,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gio/gio.h>
+#include <libnotify/notify.h>
 #include <stdio.h>
 #include <glib-object.h>
 #include <webkit/webkit.h>
@@ -36,10 +37,13 @@ typedef struct _AppMultiFolderSelectData AppMultiFolderSelectData;
 typedef struct _AppFolderSelectDialogData AppFolderSelectDialogData;
 typedef struct _Block2Data Block2Data;
 typedef struct _Block3Data Block3Data;
+typedef struct _Block4Data Block4Data;
+typedef struct _Block5Data Block5Data;
 
 struct _AppPrivate {
 	gchar* home_url;
 	gchar* title;
+	gint notice_n;
 };
 
 struct _Block1Data {
@@ -245,11 +249,23 @@ struct _AppFolderSelectDialogData {
 
 struct _Block2Data {
 	int _ref_count_;
+	App* self;
+	gchar* uri;
+};
+
+struct _Block3Data {
+	int _ref_count_;
+	App* self;
+	WebKitDownload* download;
+};
+
+struct _Block4Data {
+	int _ref_count_;
 	gint w;
 	gint h;
 };
 
-struct _Block3Data {
+struct _Block5Data {
 	int _ref_count_;
 	WebKitWebInspector* inspector;
 };
@@ -292,32 +308,53 @@ static gboolean app_folder_select_dialog_co (AppFolderSelectDialogData* _data_);
 static void app_folder_select_dialog_ready (GObject* source_object,
                                      GAsyncResult* _res_,
                                      gpointer _user_data_);
-static gboolean __lambda5_ (App* self);
-static gboolean ___lambda5__gtk_window_close_request (GtkWindow* _sender,
+static Block2Data* block2_data_ref (Block2Data* _data2_);
+static void block2_data_unref (void * _userdata_);
+static void __lambda5_ (App* self,
+                 WebKitDownload* download);
+static Block3Data* block3_data_ref (Block3Data* _data3_);
+static void block3_data_unref (void * _userdata_);
+static gboolean __lambda6_ (Block3Data* _data3_,
+                     const gchar* dst);
+static gboolean ___lambda6__webkit_download_decide_destination (WebKitDownload* _sender,
+                                                         const gchar* suggested_filename,
+                                                         gpointer self);
+static void ___lambda5__webkit_network_session_download_started (WebKitNetworkSession* _sender,
+                                                          WebKitDownload* download,
+                                                          gpointer self);
+static gboolean __lambda7_ (App* self);
+static gboolean ___lambda7__gtk_window_close_request (GtkWindow* _sender,
                                                gpointer self);
-static gboolean __lambda6_ (App* self,
+static gboolean __lambda8_ (Block2Data* _data2_,
+                     WebKitLoadEvent e);
+static gboolean ___lambda8__webkit_web_view_load_failed (WebKitWebView* _sender,
+                                                  WebKitLoadEvent load_event,
+                                                  const gchar* failing_uri,
+                                                  GError* _error_,
+                                                  gpointer self);
+static gboolean __lambda9_ (App* self,
                      WebKitContextMenu* menu);
 static void app_modify_menu (App* self,
                       WebKitContextMenu* menu);
-static gboolean ___lambda6__webkit_web_view_context_menu (WebKitWebView* _sender,
+static gboolean ___lambda9__webkit_web_view_context_menu (WebKitWebView* _sender,
                                                    WebKitContextMenu* context_menu,
                                                    WebKitHitTestResult* hit_test_result,
                                                    gpointer self);
-static void __lambda7_ (App* self);
-static void ___lambda7__g_simple_action_activate (GSimpleAction* _sender,
-                                           GVariant* parameter,
-                                           gpointer self);
-static Block2Data* block2_data_ref (Block2Data* _data2_);
-static void block2_data_unref (void * _userdata_);
-static gboolean __lambda8_ (Block2Data* _data2_);
-static gboolean ___lambda8__gsource_func (gpointer self);
-static gboolean __lambda9_ (void);
-static Block3Data* block3_data_ref (Block3Data* _data3_);
-static void block3_data_unref (void * _userdata_);
-static void __lambda10_ (Block3Data* _data3_);
-static void ___lambda10__webkit_web_inspector_closed (WebKitWebInspector* _sender,
+static void __lambda10_ (App* self);
+static void ___lambda10__g_simple_action_activate (GSimpleAction* _sender,
+                                            GVariant* parameter,
+                                            gpointer self);
+static Block4Data* block4_data_ref (Block4Data* _data4_);
+static void block4_data_unref (void * _userdata_);
+static gboolean __lambda11_ (Block4Data* _data4_);
+static gboolean ___lambda11__gsource_func (gpointer self);
+static gboolean __lambda12_ (void);
+static Block5Data* block5_data_ref (Block5Data* _data5_);
+static void block5_data_unref (void * _userdata_);
+static void __lambda13_ (Block5Data* _data5_);
+static void ___lambda13__webkit_web_inspector_closed (WebKitWebInspector* _sender,
                                                gpointer self);
-static gboolean ___lambda9__gsource_func (gpointer self);
+static gboolean ___lambda12__gsource_func (gpointer self);
 static void app_finalize (GObject * obj);
 static GType app_get_type_once (void);
 static void _vala_array_destroy (gpointer array,
@@ -401,6 +438,7 @@ app_create (App* self,
 	_tmp2_ = gtk_application_new (id, G_APPLICATION_DEFAULT_FLAGS);
 	_g_object_unref0 (self->app);
 	self->app = _tmp2_;
+	notify_init (id);
 	_tmp3_ = self->app;
 	g_signal_connect_data ((GApplication*) _tmp3_, "activate", (GCallback) ___lambda4__g_application_activate, block1_data_ref (_data1_), (GClosureNotify) block1_data_unref, 0);
 	block1_data_unref (_data1_);
@@ -1372,8 +1410,247 @@ app_folder_select_dialog_co (AppFolderSelectDialogData* _data_)
 	return FALSE;
 }
 
+static Block2Data*
+block2_data_ref (Block2Data* _data2_)
+{
+	g_atomic_int_inc (&_data2_->_ref_count_);
+	return _data2_;
+}
+
+static void
+block2_data_unref (void * _userdata_)
+{
+	Block2Data* _data2_;
+	_data2_ = (Block2Data*) _userdata_;
+	if (g_atomic_int_dec_and_test (&_data2_->_ref_count_)) {
+		App* self;
+		self = _data2_->self;
+		_g_free0 (_data2_->uri);
+		_g_object_unref0 (self);
+		g_slice_free (Block2Data, _data2_);
+	}
+}
+
+static gpointer
+_g_object_ref0 (gpointer self)
+{
+	return self ? g_object_ref (self) : NULL;
+}
+
+static Block3Data*
+block3_data_ref (Block3Data* _data3_)
+{
+	g_atomic_int_inc (&_data3_->_ref_count_);
+	return _data3_;
+}
+
+static void
+block3_data_unref (void * _userdata_)
+{
+	Block3Data* _data3_;
+	_data3_ = (Block3Data*) _userdata_;
+	if (g_atomic_int_dec_and_test (&_data3_->_ref_count_)) {
+		App* self;
+		self = _data3_->self;
+		_g_object_unref0 (_data3_->download);
+		_g_object_unref0 (self);
+		g_slice_free (Block3Data, _data3_);
+	}
+}
+
+static const gchar*
+string_to_string (const gchar* self)
+{
+	const gchar* result;
+	g_return_val_if_fail (self != NULL, NULL);
+	result = self;
+	return result;
+}
+
 static gboolean
-__lambda5_ (App* self)
+__lambda6_ (Block3Data* _data3_,
+            const gchar* dst)
+{
+	App* self;
+	gchar* dir1 = NULL;
+	const gchar* _tmp0_;
+	gchar* _tmp1_;
+	gchar* fname = NULL;
+	gchar* _tmp2_;
+	gint n = 0;
+	gchar* name = NULL;
+	const gchar* _tmp3_;
+	gchar* _tmp4_;
+	gchar* dst_name = NULL;
+	const gchar* _tmp22_;
+	const gchar* _tmp23_;
+	gchar* _tmp24_;
+	NotifyNotification* notice = NULL;
+	const gchar* _tmp25_;
+	gchar* _tmp26_;
+	gchar* _tmp27_;
+	NotifyNotification* _tmp28_;
+	NotifyNotification* _tmp29_;
+	gint _tmp34_;
+	GError* _inner_error0_ = NULL;
+	gboolean result;
+	self = _data3_->self;
+	g_return_val_if_fail (dst != NULL, FALSE);
+	_tmp0_ = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+	_tmp1_ = g_strdup (_tmp0_);
+	dir1 = _tmp1_;
+	_tmp2_ = g_strdup (dst);
+	fname = _tmp2_;
+	n = 1;
+	_tmp3_ = fname;
+	_tmp4_ = g_strdup (_tmp3_);
+	name = _tmp4_;
+	while (TRUE) {
+		GFile* f = NULL;
+		const gchar* _tmp5_;
+		const gchar* _tmp6_;
+		gchar* _tmp7_;
+		gchar* _tmp8_;
+		GFile* _tmp9_;
+		GFile* _tmp10_;
+		GFile* _tmp11_;
+		_tmp5_ = dir1;
+		_tmp6_ = name;
+		_tmp7_ = g_build_filename (_tmp5_, _tmp6_, NULL);
+		_tmp8_ = _tmp7_;
+		_tmp9_ = g_file_new_for_path (_tmp8_);
+		_tmp10_ = _tmp9_;
+		_g_free0 (_tmp8_);
+		f = _tmp10_;
+		_tmp11_ = f;
+		if (g_file_query_exists (_tmp11_, NULL)) {
+			gchar* _tmp12_;
+			gchar* _tmp13_;
+			const gchar* _tmp14_;
+			const gchar* _tmp15_;
+			gchar* _tmp16_;
+			gint _tmp17_;
+			_tmp12_ = g_strdup_printf ("%i", n);
+			_tmp13_ = _tmp12_;
+			_tmp14_ = fname;
+			_tmp15_ = string_to_string (_tmp14_);
+			_tmp16_ = g_strconcat (_tmp13_, "-", _tmp15_, NULL);
+			_g_free0 (name);
+			name = _tmp16_;
+			_g_free0 (_tmp13_);
+			_tmp17_ = n;
+			n = _tmp17_ + 1;
+			_g_object_unref0 (f);
+			continue;
+		} else {
+			const gchar* _tmp18_;
+			const gchar* _tmp19_;
+			gchar* _tmp20_;
+			gchar* _tmp21_;
+			_tmp18_ = dir1;
+			_tmp19_ = name;
+			_tmp20_ = g_build_filename (_tmp18_, _tmp19_, NULL);
+			_tmp21_ = _tmp20_;
+			webkit_download_set_destination (_data3_->download, _tmp21_);
+			_g_free0 (_tmp21_);
+			_g_object_unref0 (f);
+			break;
+		}
+		_g_object_unref0 (f);
+	}
+	_tmp22_ = dir1;
+	_tmp23_ = name;
+	_tmp24_ = g_build_filename (_tmp22_, _tmp23_, NULL);
+	dst_name = _tmp24_;
+	_tmp25_ = string_to_string (dst_name);
+	_tmp26_ = g_strconcat ("Save: ", _tmp25_, NULL);
+	_tmp27_ = _tmp26_;
+	_tmp28_ = notify_notification_new (_tmp27_, NULL, NULL);
+	_tmp29_ = _tmp28_;
+	_g_free0 (_tmp27_);
+	notice = _tmp29_;
+	{
+		notify_notification_show (notice, &_inner_error0_);
+		if (G_UNLIKELY (_inner_error0_ != NULL)) {
+			goto __catch0_g_error;
+		}
+	}
+	goto __finally0;
+	__catch0_g_error:
+	{
+		GError* e = NULL;
+		FILE* _tmp30_;
+		GError* _tmp31_;
+		const gchar* _tmp32_;
+		e = _inner_error0_;
+		_inner_error0_ = NULL;
+		_tmp30_ = stderr;
+		_tmp31_ = e;
+		_tmp32_ = _tmp31_->message;
+		fputs (_tmp32_, _tmp30_);
+		_g_error_free0 (e);
+	}
+	__finally0:
+	if (G_UNLIKELY (_inner_error0_ != NULL)) {
+		gboolean _tmp33_ = FALSE;
+		_g_object_unref0 (notice);
+		_g_free0 (dst_name);
+		_g_free0 (name);
+		_g_free0 (fname);
+		_g_free0 (dir1);
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
+		g_clear_error (&_inner_error0_);
+		return _tmp33_;
+	}
+	_tmp34_ = self->priv->notice_n;
+	self->priv->notice_n = _tmp34_ + 1;
+	result = TRUE;
+	_g_object_unref0 (notice);
+	_g_free0 (dst_name);
+	_g_free0 (name);
+	_g_free0 (fname);
+	_g_free0 (dir1);
+	return result;
+}
+
+static gboolean
+___lambda6__webkit_download_decide_destination (WebKitDownload* _sender,
+                                                const gchar* suggested_filename,
+                                                gpointer self)
+{
+	gboolean result;
+	result = __lambda6_ (self, suggested_filename);
+	return result;
+}
+
+static void
+__lambda5_ (App* self,
+            WebKitDownload* download)
+{
+	Block3Data* _data3_;
+	WebKitDownload* _tmp0_;
+	g_return_if_fail (download != NULL);
+	_data3_ = g_slice_new0 (Block3Data);
+	_data3_->_ref_count_ = 1;
+	_data3_->self = g_object_ref (self);
+	_tmp0_ = _g_object_ref0 (download);
+	_g_object_unref0 (_data3_->download);
+	_data3_->download = _tmp0_;
+	g_signal_connect_data (_data3_->download, "decide-destination", (GCallback) ___lambda6__webkit_download_decide_destination, block3_data_ref (_data3_), (GClosureNotify) block3_data_unref, 0);
+	block3_data_unref (_data3_);
+	_data3_ = NULL;
+}
+
+static void
+___lambda5__webkit_network_session_download_started (WebKitNetworkSession* _sender,
+                                                     WebKitDownload* download,
+                                                     gpointer self)
+{
+	__lambda5_ ((App*) self, download);
+}
+
+static gboolean
+__lambda7_ (App* self)
 {
 	GtkApplication* _tmp0_;
 	gboolean result;
@@ -1384,16 +1661,42 @@ __lambda5_ (App* self)
 }
 
 static gboolean
-___lambda5__gtk_window_close_request (GtkWindow* _sender,
+___lambda7__gtk_window_close_request (GtkWindow* _sender,
                                       gpointer self)
 {
 	gboolean result;
-	result = __lambda5_ ((App*) self);
+	result = __lambda7_ ((App*) self);
 	return result;
 }
 
 static gboolean
-__lambda6_ (App* self,
+__lambda8_ (Block2Data* _data2_,
+            WebKitLoadEvent e)
+{
+	App* self;
+	WebKitWebView* _tmp0_;
+	gboolean result;
+	self = _data2_->self;
+	_tmp0_ = self->webview;
+	webkit_web_view_load_uri (_tmp0_, _data2_->uri);
+	result = TRUE;
+	return result;
+}
+
+static gboolean
+___lambda8__webkit_web_view_load_failed (WebKitWebView* _sender,
+                                         WebKitLoadEvent load_event,
+                                         const gchar* failing_uri,
+                                         GError* _error_,
+                                         gpointer self)
+{
+	gboolean result;
+	result = __lambda8_ (self, load_event);
+	return result;
+}
+
+static gboolean
+__lambda9_ (App* self,
             WebKitContextMenu* menu)
 {
 	gboolean result;
@@ -1404,20 +1707,14 @@ __lambda6_ (App* self,
 }
 
 static gboolean
-___lambda6__webkit_web_view_context_menu (WebKitWebView* _sender,
+___lambda9__webkit_web_view_context_menu (WebKitWebView* _sender,
                                           WebKitContextMenu* context_menu,
                                           WebKitHitTestResult* hit_test_result,
                                           gpointer self)
 {
 	gboolean result;
-	result = __lambda6_ ((App*) self, context_menu);
+	result = __lambda9_ ((App*) self, context_menu);
 	return result;
-}
-
-static gpointer
-_g_object_ref0 (gpointer self)
-{
-	return self ? g_object_ref (self) : NULL;
 }
 
 static void
@@ -1425,59 +1722,104 @@ app_on_app_activate (App* self,
                      GtkApplication* app,
                      const gchar* uri)
 {
+	Block2Data* _data2_;
 	gchar* _tmp0_;
+	gchar* _tmp1_;
 	GtkWindow* win = NULL;
-	GtkWindow* _tmp1_;
-	const gchar* _tmp2_;
-	GtkApplication* _tmp3_;
-	WebKitWebView* _tmp4_;
+	GtkWindow* _tmp2_;
+	const gchar* _tmp3_;
+	GtkApplication* _tmp4_;
 	WebKitWebView* _tmp5_;
 	WebKitWebView* _tmp6_;
-	WebKitWebView* _tmp7_;
 	WebKitSettings* settings = NULL;
-	WebKitWebView* _tmp8_;
+	WebKitWebView* _tmp7_;
+	WebKitSettings* _tmp8_;
 	WebKitSettings* _tmp9_;
-	WebKitSettings* _tmp10_;
-	GtkWindow* _tmp11_;
+	WebKitWebView* _tmp10_;
+	WebKitWebView* _tmp11_;
+	WebKitNetworkSession* _tmp12_;
+	WebKitNetworkSession* _tmp13_;
+	WebKitWebView* _tmp14_;
+	WebKitWebView* _tmp15_;
+	WebKitWebView* _tmp16_;
+	GtkWindow* _tmp17_;
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (app != NULL);
 	g_return_if_fail (uri != NULL);
+	_data2_ = g_slice_new0 (Block2Data);
+	_data2_->_ref_count_ = 1;
+	_data2_->self = g_object_ref (self);
 	_tmp0_ = g_strdup (uri);
+	_g_free0 (_data2_->uri);
+	_data2_->uri = _tmp0_;
+	_tmp1_ = g_strdup (_data2_->uri);
 	_g_free0 (self->priv->home_url);
-	self->priv->home_url = _tmp0_;
-	_tmp1_ = (GtkWindow*) gtk_window_new ();
-	g_object_ref_sink (_tmp1_);
-	win = _tmp1_;
-	_tmp2_ = self->priv->title;
-	gtk_window_set_title (win, _tmp2_);
-	_tmp3_ = self->app;
-	gtk_application_add_window (_tmp3_, win);
-	_tmp4_ = (WebKitWebView*) webkit_web_view_new ();
-	g_object_ref_sink (_tmp4_);
+	self->priv->home_url = _tmp1_;
+	_tmp2_ = (GtkWindow*) gtk_window_new ();
+	g_object_ref_sink (_tmp2_);
+	win = _tmp2_;
+	_tmp3_ = self->priv->title;
+	gtk_window_set_title (win, _tmp3_);
+	_tmp4_ = self->app;
+	gtk_application_add_window (_tmp4_, win);
+	_tmp5_ = (WebKitWebView*) webkit_web_view_new ();
+	g_object_ref_sink (_tmp5_);
 	_g_object_unref0 (self->webview);
-	self->webview = _tmp4_;
-	_tmp5_ = self->webview;
-	gtk_window_set_child (win, (GtkWidget*) _tmp5_);
-	g_signal_connect_object (win, "close-request", (GCallback) ___lambda5__gtk_window_close_request, self, 0);
+	self->webview = _tmp5_;
 	_tmp6_ = self->webview;
-	webkit_web_view_load_uri (_tmp6_, uri);
+	gtk_window_set_child (win, (GtkWidget*) _tmp6_);
 	_tmp7_ = self->webview;
-	g_signal_connect_object (_tmp7_, "context-menu", (GCallback) ___lambda6__webkit_web_view_context_menu, self, 0);
-	_tmp8_ = self->webview;
-	_tmp9_ = webkit_web_view_get_settings (_tmp8_);
-	_tmp10_ = _g_object_ref0 (_tmp9_);
-	settings = _tmp10_;
+	_tmp8_ = webkit_web_view_get_settings (_tmp7_);
+	_tmp9_ = _g_object_ref0 (_tmp8_);
+	settings = _tmp9_;
+	webkit_settings_set_allow_file_access_from_file_urls (settings, TRUE);
+	webkit_settings_set_allow_modal_dialogs (settings, TRUE);
+	webkit_settings_set_allow_top_navigation_to_data_urls (settings, TRUE);
+	webkit_settings_set_allow_universal_access_from_file_urls (settings, TRUE);
+	webkit_settings_set_enable_webgl (settings, TRUE);
+	webkit_settings_set_enable_webrtc (settings, TRUE);
+	webkit_settings_set_enable_html5_database (settings, TRUE);
+	webkit_settings_set_enable_html5_local_storage (settings, TRUE);
+	webkit_settings_set_enable_encrypted_media (settings, TRUE);
+	webkit_settings_set_enable_media (settings, TRUE);
+	webkit_settings_set_enable_media_capabilities (settings, TRUE);
+	webkit_settings_set_enable_media_stream (settings, TRUE);
+	webkit_settings_set_enable_mediasource (settings, TRUE);
+	webkit_settings_set_enable_write_console_messages_to_stdout (settings, TRUE);
+	webkit_settings_set_user_agent (settings, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Geck" \
+"o) Version/60.5 Safari/605.1.15 Chrome/120.0.0.0 Safari/537.36");
+	webkit_settings_set_javascript_can_open_windows_automatically (settings, TRUE);
+	webkit_settings_set_javascript_can_access_clipboard (settings, TRUE);
+	webkit_settings_set_auto_load_images (settings, TRUE);
+	webkit_settings_set_enable_javascript (settings, TRUE);
+	webkit_settings_set_enable_javascript_markup (settings, TRUE);
+	webkit_settings_set_enable_tabs_to_links (settings, TRUE);
+	_tmp10_ = self->webview;
+	gtk_widget_set_child_visible ((GtkWidget*) _tmp10_, TRUE);
+	_tmp11_ = self->webview;
+	_tmp12_ = webkit_web_view_get_network_session (_tmp11_);
+	_tmp13_ = _tmp12_;
+	g_signal_connect_object (_tmp13_, "download-started", (GCallback) ___lambda5__webkit_network_session_download_started, self, 0);
+	g_signal_connect_object (win, "close-request", (GCallback) ___lambda7__gtk_window_close_request, self, 0);
+	_tmp14_ = self->webview;
+	g_signal_connect_data (_tmp14_, "load-failed", (GCallback) ___lambda8__webkit_web_view_load_failed, block2_data_ref (_data2_), (GClosureNotify) block2_data_unref, 0);
+	_tmp15_ = self->webview;
+	webkit_web_view_load_uri (_tmp15_, _data2_->uri);
+	_tmp16_ = self->webview;
+	g_signal_connect_object (_tmp16_, "context-menu", (GCallback) ___lambda9__webkit_web_view_context_menu, self, 0);
 	g_object_set ((GObject*) settings, "enable-developer_extras", TRUE, NULL, NULL);
 	gtk_window_present (win);
-	_tmp11_ = _g_object_ref0 (win);
+	_tmp17_ = _g_object_ref0 (win);
 	_g_object_unref0 (self->win);
-	self->win = _tmp11_;
+	self->win = _tmp17_;
 	_g_object_unref0 (settings);
 	_g_object_unref0 (win);
+	block2_data_unref (_data2_);
+	_data2_ = NULL;
 }
 
 static void
-__lambda7_ (App* self)
+__lambda10_ (App* self)
 {
 	WebKitWebView* _tmp0_;
 	const gchar* _tmp1_;
@@ -1487,11 +1829,11 @@ __lambda7_ (App* self)
 }
 
 static void
-___lambda7__g_simple_action_activate (GSimpleAction* _sender,
-                                      GVariant* parameter,
-                                      gpointer self)
+___lambda10__g_simple_action_activate (GSimpleAction* _sender,
+                                       GVariant* parameter,
+                                       gpointer self)
 {
-	__lambda7_ ((App*) self);
+	__lambda10_ ((App*) self);
 }
 
 static void
@@ -1506,7 +1848,7 @@ app_modify_menu (App* self,
 	g_return_if_fail (menu != NULL);
 	_tmp0_ = g_simple_action_new ("go home", NULL);
 	act1 = _tmp0_;
-	g_signal_connect_object (act1, "activate", (GCallback) ___lambda7__g_simple_action_activate, self, 0);
+	g_signal_connect_object (act1, "activate", (GCallback) ___lambda10__g_simple_action_activate, self, 0);
 	_tmp1_ = webkit_context_menu_item_new_from_gaction (G_TYPE_CHECK_INSTANCE_TYPE (act1, g_action_get_type ()) ? ((GAction*) act1) : NULL, "go home", NULL);
 	g_object_ref_sink (_tmp1_);
 	item = _tmp1_;
@@ -1594,41 +1936,41 @@ app_get_webview (void)
 	return result;
 }
 
-static Block2Data*
-block2_data_ref (Block2Data* _data2_)
+static Block4Data*
+block4_data_ref (Block4Data* _data4_)
 {
-	g_atomic_int_inc (&_data2_->_ref_count_);
-	return _data2_;
+	g_atomic_int_inc (&_data4_->_ref_count_);
+	return _data4_;
 }
 
 static void
-block2_data_unref (void * _userdata_)
+block4_data_unref (void * _userdata_)
 {
-	Block2Data* _data2_;
-	_data2_ = (Block2Data*) _userdata_;
-	if (g_atomic_int_dec_and_test (&_data2_->_ref_count_)) {
-		g_slice_free (Block2Data, _data2_);
+	Block4Data* _data4_;
+	_data4_ = (Block4Data*) _userdata_;
+	if (g_atomic_int_dec_and_test (&_data4_->_ref_count_)) {
+		g_slice_free (Block4Data, _data4_);
 	}
 }
 
 static gboolean
-__lambda8_ (Block2Data* _data2_)
+__lambda11_ (Block4Data* _data4_)
 {
 	App* _tmp0_;
 	GtkWindow* _tmp1_;
 	gboolean result;
 	_tmp0_ = app_application;
 	_tmp1_ = _tmp0_->win;
-	gtk_widget_set_size_request ((GtkWidget*) _tmp1_, _data2_->w, _data2_->h);
+	gtk_widget_set_size_request ((GtkWidget*) _tmp1_, _data4_->w, _data4_->h);
 	result = FALSE;
 	return result;
 }
 
 static gboolean
-___lambda8__gsource_func (gpointer self)
+___lambda11__gsource_func (gpointer self)
 {
 	gboolean result;
-	result = __lambda8_ (self);
+	result = __lambda11_ (self);
 	return result;
 }
 
@@ -1636,83 +1978,83 @@ void
 app_resize (gint w,
             gint h)
 {
-	Block2Data* _data2_;
-	_data2_ = g_slice_new0 (Block2Data);
-	_data2_->_ref_count_ = 1;
-	_data2_->w = w;
-	_data2_->h = h;
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda8__gsource_func, block2_data_ref (_data2_), block2_data_unref);
-	block2_data_unref (_data2_);
-	_data2_ = NULL;
+	Block4Data* _data4_;
+	_data4_ = g_slice_new0 (Block4Data);
+	_data4_->_ref_count_ = 1;
+	_data4_->w = w;
+	_data4_->h = h;
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda11__gsource_func, block4_data_ref (_data4_), block4_data_unref);
+	block4_data_unref (_data4_);
+	_data4_ = NULL;
 }
 
-static Block3Data*
-block3_data_ref (Block3Data* _data3_)
+static Block5Data*
+block5_data_ref (Block5Data* _data5_)
 {
-	g_atomic_int_inc (&_data3_->_ref_count_);
-	return _data3_;
+	g_atomic_int_inc (&_data5_->_ref_count_);
+	return _data5_;
 }
 
 static void
-block3_data_unref (void * _userdata_)
+block5_data_unref (void * _userdata_)
 {
-	Block3Data* _data3_;
-	_data3_ = (Block3Data*) _userdata_;
-	if (g_atomic_int_dec_and_test (&_data3_->_ref_count_)) {
-		_g_object_unref0 (_data3_->inspector);
-		g_slice_free (Block3Data, _data3_);
+	Block5Data* _data5_;
+	_data5_ = (Block5Data*) _userdata_;
+	if (g_atomic_int_dec_and_test (&_data5_->_ref_count_)) {
+		_g_object_unref0 (_data5_->inspector);
+		g_slice_free (Block5Data, _data5_);
 	}
 }
 
 static void
-__lambda10_ (Block3Data* _data3_)
+__lambda13_ (Block5Data* _data5_)
 {
-	webkit_web_inspector_close (_data3_->inspector);
+	webkit_web_inspector_close (_data5_->inspector);
 }
 
 static void
-___lambda10__webkit_web_inspector_closed (WebKitWebInspector* _sender,
+___lambda13__webkit_web_inspector_closed (WebKitWebInspector* _sender,
                                           gpointer self)
 {
-	__lambda10_ (self);
+	__lambda13_ (self);
 }
 
 static gboolean
-__lambda9_ (void)
+__lambda12_ (void)
 {
-	Block3Data* _data3_;
+	Block5Data* _data5_;
 	App* _tmp0_;
 	WebKitWebView* _tmp1_;
 	WebKitWebInspector* _tmp2_;
 	WebKitWebInspector* _tmp3_;
 	gboolean result;
-	_data3_ = g_slice_new0 (Block3Data);
-	_data3_->_ref_count_ = 1;
+	_data5_ = g_slice_new0 (Block5Data);
+	_data5_->_ref_count_ = 1;
 	_tmp0_ = app_application;
 	_tmp1_ = _tmp0_->webview;
 	_tmp2_ = webkit_web_view_get_inspector (_tmp1_);
 	_tmp3_ = _g_object_ref0 (_tmp2_);
-	_data3_->inspector = _tmp3_;
-	g_signal_connect_data (_data3_->inspector, "closed", (GCallback) ___lambda10__webkit_web_inspector_closed, block3_data_ref (_data3_), (GClosureNotify) block3_data_unref, 0);
-	webkit_web_inspector_show (_data3_->inspector);
+	_data5_->inspector = _tmp3_;
+	g_signal_connect_data (_data5_->inspector, "closed", (GCallback) ___lambda13__webkit_web_inspector_closed, block5_data_ref (_data5_), (GClosureNotify) block5_data_unref, 0);
+	webkit_web_inspector_show (_data5_->inspector);
 	result = FALSE;
-	block3_data_unref (_data3_);
-	_data3_ = NULL;
+	block5_data_unref (_data5_);
+	_data5_ = NULL;
 	return result;
 }
 
 static gboolean
-___lambda9__gsource_func (gpointer self)
+___lambda12__gsource_func (gpointer self)
 {
 	gboolean result;
-	result = __lambda9_ ();
+	result = __lambda12_ ();
 	return result;
 }
 
 void
 app_show_inspector (void)
 {
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda9__gsource_func, NULL, NULL);
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda12__gsource_func, NULL, NULL);
 }
 
 App*
@@ -1743,6 +2085,7 @@ app_instance_init (App * self,
                    gpointer klass)
 {
 	self->priv = app_get_instance_private (self);
+	self->priv->notice_n = 0;
 }
 
 static void
