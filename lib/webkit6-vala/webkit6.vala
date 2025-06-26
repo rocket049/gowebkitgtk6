@@ -2,6 +2,7 @@ using Gtk;
 using WebKit;
 using GLib;
 using Notify;
+using Posix;
 
 public class App: GLib.Object {
     public Gtk.Application app;
@@ -40,7 +41,7 @@ public class App: GLib.Object {
             var res = yield dlg.save(App.application.win, null);
             return res.get_path();
         }catch (GLib.Error e) {
-            stderr.puts(e.message);
+            GLib.stderr.puts(e.message);
             return null;
         }
         
@@ -64,7 +65,7 @@ public class App: GLib.Object {
             var res = yield dlg.open(App.application.win, null);
             return res.get_path();
         }catch (GLib.Error e) {
-            stderr.puts(e.message);
+            GLib.stderr.puts(e.message);
             return null;
         }
         
@@ -95,7 +96,7 @@ public class App: GLib.Object {
             //App.application.callback(result);
             return result;
         }catch (GLib.Error e) {
-            stderr.puts(e.message);
+            GLib.stderr.puts(e.message);
             return null;
         }
     }
@@ -121,7 +122,7 @@ public class App: GLib.Object {
 
             return result;
         }catch (GLib.Error e) {
-            stderr.puts(e.message);
+            GLib.stderr.puts(e.message);
             return null;
         }
         
@@ -142,12 +143,25 @@ public class App: GLib.Object {
                 return res.get_path();
             }
             catch (GLib.Error e ) {
-                stderr.puts(e.message);
+                GLib.stderr.puts(e.message);
                 return null;
             }
 
     }
-
+    private async bool select_file_and_save( string name ) {
+        var p = yield App.file_save_dialog("保存文件(Save file)", null);
+        if (p!=null) {
+            var f1 = GLib.File.new_for_path(name);
+            var f2 = GLib.File.new_for_path(p);
+            try {
+                var ret = f1.copy(f2, GLib.FileCopyFlags.OVERWRITE, null, null );
+                Posix.unlink(name);
+                return ret;
+            }
+            catch (Error e) {}
+        }
+        return true;
+    }
     private void on_app_activate(Gtk.Application app, string uri) {
         this.home_url = uri;
         var win = new  Gtk.Window();
@@ -181,27 +195,34 @@ public class App: GLib.Object {
         settings.enable_tabs_to_links = true;
         this.webview.set_child_visible(true);
         this.webview.network_session.download_started.connect((download)=>{
+            download.finished.connect(()=>{
+                select_file_and_save(download.get_destination());
+            });
             download.decide_destination.connect((dst)=>{
                 var dir1 = GLib.Environment.get_user_special_dir(GLib.UserDirectory.DOWNLOAD);
                 //var f = File.new_for_path(Path.build_filename(dir1, dst ));
                 
                 var fname = dst;
-                var n = 1;
+                //var n = 1;
                 var name = fname;
-                while (true) {
-                    var f = File.new_for_path(Path.build_filename(dir1, name ));
-                    if ( f.query_exists(null) ){
-                        name = @"$(n)-$(fname)";
-                        n++;
-                        continue;
-                    }else {
-                        download.set_destination( Path.build_filename(dir1, name ) );
-                        break;
-                    }
+                var f = File.new_for_path(Path.build_filename(dir1, name ));
+                if ( f.query_exists(null) )
+                    Posix.unlink( Path.build_filename(dir1, name ) );
+                //  while (true) {
+                //      var f = File.new_for_path(Path.build_filename(dir1, name ));
+                //      if ( f.query_exists(null) ){
+                //          name = @"$(n)-$(fname)";
+                //          n++;
+                //          continue;
+                //      }else {
+                //          download.set_destination( Path.build_filename(dir1, name ) );
+                //          break;
+                //      }
                     
-                }
+                //  }
                 
                 var dst_name = Path.build_filename(dir1, name );
+                download.set_destination( dst_name );
                 var notice = new Notify.Notification(@"Save: $(dst_name)", null, null);
 
                 // stdout.printf("%s\n", @"Save: $(dst_name)");
@@ -209,7 +230,7 @@ public class App: GLib.Object {
                     notice.show();
                 }
                 catch(Error e){
-                    stderr.puts(e.message);
+                    GLib.stderr.puts(e.message);
                 }
                 
                 this.notice_n++;
@@ -217,6 +238,7 @@ public class App: GLib.Object {
                 return true;
             });
         });
+
         //  this.webview.network_session.download_started.connect((download)=>{
         //      download.set_allow_overwrite(false);
         //      download.created_destination.connect((dst)=>{
