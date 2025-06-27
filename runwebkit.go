@@ -123,3 +123,12 @@ func AppResize(w, h int) {
 func AppShowInspector() {
 	C.app_show_inspector()
 }
+
+// set auto save mode
+func AppSetAutoSave(m bool) {
+	mode := 0
+	if m {
+		mode = 1
+	}
+	C.app_set_auto_save(C.gint(mode))
+}

@@ -10,8 +10,7 @@ public class App: GLib.Object {
     public Gtk.Window win;
     private string home_url;
     private string title;
-    private int notice_n = 0;
-
+    private bool auto_name = false;
     public void create(string id, string title, string uri) {
         this.title = title;
         Gtk.init();
@@ -34,8 +33,8 @@ public class App: GLib.Object {
         dlg.set_title(title);
         
         if( start != null ){
-            var folder= GLib.File.new_for_path(start);
-            dlg.set_initial_folder(folder);
+            var f1= GLib.File.new_for_path(start);
+            dlg.set_initial_file(f1);
         }
         try{
             var res = yield dlg.save(App.application.win, null);
@@ -149,7 +148,7 @@ public class App: GLib.Object {
 
     }
     private async bool select_file_and_save( string name ) {
-        var p = yield App.file_save_dialog("保存文件(Save file)", null);
+        var p = yield App.file_save_dialog("保存文件(Save file)", name);
         if (p!=null) {
             var f1 = GLib.File.new_for_path(name);
             var f2 = GLib.File.new_for_path(p);
@@ -161,6 +160,10 @@ public class App: GLib.Object {
             catch (Error e) {}
         }
         return true;
+    }
+    public static void set_auto_save(int m) {
+        bool mode = (m==0)?false:true;
+        App.application.auto_name = mode;
     }
     private void on_app_activate(Gtk.Application app, string uri) {
         this.home_url = uri;
@@ -185,8 +188,6 @@ public class App: GLib.Object {
         settings.enable_media_stream = true;
         settings.enable_mediasource = true;
         settings.enable_write_console_messages_to_stdout = true;
-        //stdout.printf("user-agent:%s\n",settings.user_agent);
-        settings.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15 Chrome/120.0.0.0 Safari/537.36";
         settings.javascript_can_open_windows_automatically = true;
         settings.javascript_can_access_clipboard = true;
         settings.auto_load_images = true;
@@ -196,80 +197,63 @@ public class App: GLib.Object {
         this.webview.set_child_visible(true);
         this.webview.network_session.download_started.connect((download)=>{
             download.finished.connect(()=>{
-                select_file_and_save(download.get_destination());
+                if ( !auto_name )
+                    select_file_and_save(download.get_destination());
             });
             download.decide_destination.connect((dst)=>{
                 var dir1 = GLib.Environment.get_user_special_dir(GLib.UserDirectory.DOWNLOAD);
-                //var f = File.new_for_path(Path.build_filename(dir1, dst ));
-                
+
+                if ( !auto_name ) {
+                    dir1 = Path.build_filename(GLib.Environment.get_tmp_dir(), "webkit6go");
+                    Posix.mkdir(dir1, 0755);
+                }
+
                 var fname = dst;
-                //var n = 1;
+
                 var name = fname;
-                var f = File.new_for_path(Path.build_filename(dir1, name ));
-                if ( f.query_exists(null) )
-                    Posix.unlink( Path.build_filename(dir1, name ) );
-                //  while (true) {
-                //      var f = File.new_for_path(Path.build_filename(dir1, name ));
-                //      if ( f.query_exists(null) ){
-                //          name = @"$(n)-$(fname)";
-                //          n++;
-                //          continue;
-                //      }else {
-                //          download.set_destination( Path.build_filename(dir1, name ) );
-                //          break;
-                //      }
-                    
-                //  }
+                
+                if (  !auto_name ) {
+                    var f = File.new_for_path(Path.build_filename(dir1, name ));
+                    if (f.query_exists(null))
+                        Posix.unlink( Path.build_filename(dir1, name ) );
+                }
+                else {
+                    var n = 1;
+                    while (true) {
+                        var f2 = File.new_for_path(Path.build_filename(dir1, name ));
+                        if ( f2.query_exists(null) ){
+                            var v1 = fname.split(".", -1);
+                            if (v1.length==1)
+                                name = @"$(n)-$(fname)";
+                            else {
+                                v1[v1.length-2] = @"$(v1[v1.length-2])-$(n)";
+                                name = string.joinv(".", v1);
+                            }
+                            n++;
+                            continue;
+                        }else {
+                            break;
+                        }
+                    }
+                }
                 
                 var dst_name = Path.build_filename(dir1, name );
                 download.set_destination( dst_name );
-                var notice = new Notify.Notification(@"Save: $(dst_name)", null, null);
+                if (auto_name) {
+                    var notice = new Notify.Notification(@"Save: $(dst_name)", null, null);
 
-                // stdout.printf("%s\n", @"Save: $(dst_name)");
-                try{
-                    notice.show();
+                    // stdout.printf("%s\n", @"Save: $(dst_name)");
+                    try{
+                        notice.show();
+                    }
+                    catch(Error e){
+                        GLib.stderr.puts(e.message);
+                    }
                 }
-                catch(Error e){
-                    GLib.stderr.puts(e.message);
-                }
-                
-                this.notice_n++;
                 
                 return true;
             });
         });
-
-        //  this.webview.network_session.download_started.connect((download)=>{
-        //      download.set_allow_overwrite(false);
-        //      download.created_destination.connect((dst)=>{
-        //          var dir1 = Path.get_dirname(dst);
-                
-        //          var fname = Path.get_basename(dst);
-        //          var n = 1;
-        //          var name = fname;
-        //          while (true) {
-        //              var f = File.new_for_path(Path.build_filename(dir1, name ));
-        //              if ( f.query_exists(null) ){
-        //                  name = @"$(n)-$(fname)";
-        //                  n++;
-        //                  continue;
-        //              }else {
-        //                  download.set_destination( Path.build_filename(dir1, name ) );
-        //                  break;
-        //              }
-                    
-        //          }
-                
-        //          var dst_name = Path.build_filename(dir1, name );
-        //          var notice = new GLib.Notification("Download");
-        //          notice.set_body( @"Save: $(dst_name)" );
-        //          stdout.printf("%s\n", @"Save: $(dst_name)");
-        //          this.app.send_notification(@"app.notice.$(this.notice_n)", notice);
-        //          this.notice_n++;
-        //      });
-            
-        //  }
-        //  );
 
         win.close_request.connect(()=>{
             this.app.quit();
@@ -339,6 +323,5 @@ public class App: GLib.Object {
             return false;
         },
         GLib.Priority.DEFAULT_IDLE);
-    }
-    
+    }    
 }

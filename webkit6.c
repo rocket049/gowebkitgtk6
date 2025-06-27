@@ -12,6 +12,8 @@
 #include <glib-object.h>
 #include <unistd.h>
 #include <webkit/webkit.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #if !defined(VALA_STRICT_C)
 #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ >= 14)
@@ -45,7 +47,7 @@ typedef struct _Block5Data Block5Data;
 struct _AppPrivate {
 	gchar* home_url;
 	gchar* title;
-	gint notice_n;
+	gboolean auto_name;
 };
 
 struct _Block1Data {
@@ -66,7 +68,7 @@ struct _AppFileSaveDialogData {
 	GtkFileDialog* _tmp0_;
 	GtkFileDialog* _tmp1_;
 	GtkFileDialog* _tmp2_;
-	GFile* folder;
+	GFile* f1;
 	GFile* _tmp3_;
 	GtkFileDialog* _tmp4_;
 	GFile* _tmp5_;
@@ -401,6 +403,7 @@ static void _vala_array_destroy (gpointer array,
 static void _vala_array_free (gpointer array,
                        gssize array_length,
                        GDestroyNotify destroy_func);
+static gssize _vala_array_length (gpointer array);
 
 static inline gpointer
 app_get_instance_private (App* self)
@@ -570,11 +573,11 @@ app_file_save_dialog_co (AppFileSaveDialogData* _data_)
 	gtk_file_dialog_set_title (_data_->_tmp2_, _data_->title);
 	if (_data_->start != NULL) {
 		_data_->_tmp3_ = g_file_new_for_path (_data_->start);
-		_data_->folder = _data_->_tmp3_;
+		_data_->f1 = _data_->_tmp3_;
 		_data_->_tmp4_ = _data_->dlg;
-		_data_->_tmp5_ = _data_->folder;
-		gtk_file_dialog_set_initial_folder (_data_->_tmp4_, _data_->_tmp5_);
-		_g_object_unref0 (_data_->folder);
+		_data_->_tmp5_ = _data_->f1;
+		gtk_file_dialog_set_initial_file (_data_->_tmp4_, _data_->_tmp5_);
+		_g_object_unref0 (_data_->f1);
 	}
 	{
 		_data_->_tmp6_ = _data_->dlg;
@@ -1522,7 +1525,7 @@ app_select_file_and_save_co (AppSelectFileAndSaveData* _data_)
 	}
 	_state_0:
 	_data_->_state_ = 1;
-	app_file_save_dialog ("保存文件(Save file)", NULL, app_select_file_and_save_ready, _data_);
+	app_file_save_dialog ("保存文件(Save file)", _data_->name, app_select_file_and_save_ready, _data_);
 	return FALSE;
 	_state_1:
 	_data_->_tmp0_ = app_file_save_dialog_finish (_data_->_res_);
@@ -1585,6 +1588,22 @@ app_select_file_and_save_co (AppSelectFileAndSaveData* _data_)
 	return FALSE;
 }
 
+void
+app_set_auto_save (gint m)
+{
+	gboolean _tmp0_ = FALSE;
+	gboolean mode = FALSE;
+	App* _tmp1_;
+	if (m == 0) {
+		_tmp0_ = FALSE;
+	} else {
+		_tmp0_ = TRUE;
+	}
+	mode = _tmp0_;
+	_tmp1_ = app_application;
+	_tmp1_->priv->auto_name = mode;
+}
+
 static Block2Data*
 block2_data_ref (Block2Data* _data2_)
 {
@@ -1631,10 +1650,12 @@ static void
 __lambda6_ (Block3Data* _data3_)
 {
 	App* self;
-	const gchar* _tmp0_;
 	self = _data3_->self;
-	_tmp0_ = webkit_download_get_destination (_data3_->download);
-	app_select_file_and_save (self, _tmp0_, NULL, NULL);
+	if (!self->priv->auto_name) {
+		const gchar* _tmp0_;
+		_tmp0_ = webkit_download_get_destination (_data3_->download);
+		app_select_file_and_save (self, _tmp0_, NULL, NULL);
+	}
 }
 
 static void
@@ -1662,29 +1683,15 @@ __lambda7_ (Block3Data* _data3_,
 	const gchar* _tmp0_;
 	gchar* _tmp1_;
 	gchar* fname = NULL;
-	gchar* _tmp2_;
+	gchar* _tmp5_;
 	gchar* name = NULL;
-	const gchar* _tmp3_;
-	gchar* _tmp4_;
-	GFile* f = NULL;
-	const gchar* _tmp5_;
 	const gchar* _tmp6_;
 	gchar* _tmp7_;
-	gchar* _tmp8_;
-	GFile* _tmp9_;
-	GFile* _tmp10_;
-	GFile* _tmp11_;
 	gchar* dst_name = NULL;
-	const gchar* _tmp16_;
-	const gchar* _tmp17_;
-	gchar* _tmp18_;
-	NotifyNotification* notice = NULL;
-	const gchar* _tmp19_;
-	gchar* _tmp20_;
-	gchar* _tmp21_;
-	NotifyNotification* _tmp22_;
-	NotifyNotification* _tmp23_;
-	gint _tmp28_;
+	const gchar* _tmp47_;
+	const gchar* _tmp48_;
+	gchar* _tmp49_;
+	const gchar* _tmp50_;
 	GError* _inner_error0_ = NULL;
 	gboolean result;
 	self = _data3_->self;
@@ -1692,84 +1699,217 @@ __lambda7_ (Block3Data* _data3_,
 	_tmp0_ = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
 	_tmp1_ = g_strdup (_tmp0_);
 	dir1 = _tmp1_;
-	_tmp2_ = g_strdup (dst);
-	fname = _tmp2_;
-	_tmp3_ = fname;
-	_tmp4_ = g_strdup (_tmp3_);
-	name = _tmp4_;
-	_tmp5_ = dir1;
-	_tmp6_ = name;
-	_tmp7_ = g_build_filename (_tmp5_, _tmp6_, NULL);
-	_tmp8_ = _tmp7_;
-	_tmp9_ = g_file_new_for_path (_tmp8_);
-	_tmp10_ = _tmp9_;
-	_g_free0 (_tmp8_);
-	f = _tmp10_;
-	_tmp11_ = f;
-	if (g_file_query_exists (_tmp11_, NULL)) {
-		const gchar* _tmp12_;
-		const gchar* _tmp13_;
-		gchar* _tmp14_;
-		gchar* _tmp15_;
-		_tmp12_ = dir1;
-		_tmp13_ = name;
-		_tmp14_ = g_build_filename (_tmp12_, _tmp13_, NULL);
-		_tmp15_ = _tmp14_;
-		unlink (_tmp15_);
-		_g_free0 (_tmp15_);
+	if (!self->priv->auto_name) {
+		const gchar* _tmp2_;
+		gchar* _tmp3_;
+		const gchar* _tmp4_;
+		_tmp2_ = g_get_tmp_dir ();
+		_tmp3_ = g_build_filename (_tmp2_, "webkit6go", NULL);
+		_g_free0 (dir1);
+		dir1 = _tmp3_;
+		_tmp4_ = dir1;
+		mkdir (_tmp4_, (mode_t) 0755);
 	}
-	_tmp16_ = dir1;
-	_tmp17_ = name;
-	_tmp18_ = g_build_filename (_tmp16_, _tmp17_, NULL);
-	dst_name = _tmp18_;
-	webkit_download_set_destination (_data3_->download, dst_name);
-	_tmp19_ = string_to_string (dst_name);
-	_tmp20_ = g_strconcat ("Save: ", _tmp19_, NULL);
-	_tmp21_ = _tmp20_;
-	_tmp22_ = notify_notification_new (_tmp21_, NULL, NULL);
-	_tmp23_ = _tmp22_;
-	_g_free0 (_tmp21_);
-	notice = _tmp23_;
-	{
-		notify_notification_show (notice, &_inner_error0_);
-		if (G_UNLIKELY (_inner_error0_ != NULL)) {
-			goto __catch0_g_error;
+	_tmp5_ = g_strdup (dst);
+	fname = _tmp5_;
+	_tmp6_ = fname;
+	_tmp7_ = g_strdup (_tmp6_);
+	name = _tmp7_;
+	if (!self->priv->auto_name) {
+		GFile* f = NULL;
+		const gchar* _tmp8_;
+		const gchar* _tmp9_;
+		gchar* _tmp10_;
+		gchar* _tmp11_;
+		GFile* _tmp12_;
+		GFile* _tmp13_;
+		GFile* _tmp14_;
+		_tmp8_ = dir1;
+		_tmp9_ = name;
+		_tmp10_ = g_build_filename (_tmp8_, _tmp9_, NULL);
+		_tmp11_ = _tmp10_;
+		_tmp12_ = g_file_new_for_path (_tmp11_);
+		_tmp13_ = _tmp12_;
+		_g_free0 (_tmp11_);
+		f = _tmp13_;
+		_tmp14_ = f;
+		if (g_file_query_exists (_tmp14_, NULL)) {
+			const gchar* _tmp15_;
+			const gchar* _tmp16_;
+			gchar* _tmp17_;
+			gchar* _tmp18_;
+			_tmp15_ = dir1;
+			_tmp16_ = name;
+			_tmp17_ = g_build_filename (_tmp15_, _tmp16_, NULL);
+			_tmp18_ = _tmp17_;
+			unlink (_tmp18_);
+			_g_free0 (_tmp18_);
+		}
+		_g_object_unref0 (f);
+	} else {
+		gint n = 0;
+		n = 1;
+		while (TRUE) {
+			GFile* f2 = NULL;
+			const gchar* _tmp19_;
+			const gchar* _tmp20_;
+			gchar* _tmp21_;
+			gchar* _tmp22_;
+			GFile* _tmp23_;
+			GFile* _tmp24_;
+			GFile* _tmp25_;
+			_tmp19_ = dir1;
+			_tmp20_ = name;
+			_tmp21_ = g_build_filename (_tmp19_, _tmp20_, NULL);
+			_tmp22_ = _tmp21_;
+			_tmp23_ = g_file_new_for_path (_tmp22_);
+			_tmp24_ = _tmp23_;
+			_g_free0 (_tmp22_);
+			f2 = _tmp24_;
+			_tmp25_ = f2;
+			if (g_file_query_exists (_tmp25_, NULL)) {
+				gchar** v1 = NULL;
+				const gchar* _tmp26_;
+				gchar** _tmp27_;
+				gchar** _tmp28_;
+				gint v1_length1;
+				gint _v1_size_;
+				gchar** _tmp29_;
+				gint _tmp29__length1;
+				gint _tmp46_;
+				_tmp26_ = fname;
+				_tmp28_ = _tmp27_ = g_strsplit (_tmp26_, ".", -1);
+				v1 = _tmp28_;
+				v1_length1 = _vala_array_length (_tmp27_);
+				_v1_size_ = v1_length1;
+				_tmp29_ = v1;
+				_tmp29__length1 = v1_length1;
+				if (_tmp29__length1 == 1) {
+					gchar* _tmp30_;
+					gchar* _tmp31_;
+					const gchar* _tmp32_;
+					const gchar* _tmp33_;
+					gchar* _tmp34_;
+					_tmp30_ = g_strdup_printf ("%i", n);
+					_tmp31_ = _tmp30_;
+					_tmp32_ = fname;
+					_tmp33_ = string_to_string (_tmp32_);
+					_tmp34_ = g_strconcat (_tmp31_, "-", _tmp33_, NULL);
+					_g_free0 (name);
+					name = _tmp34_;
+					_g_free0 (_tmp31_);
+				} else {
+					gchar** _tmp35_;
+					gint _tmp35__length1;
+					gchar** _tmp36_;
+					gint _tmp36__length1;
+					gchar** _tmp37_;
+					gint _tmp37__length1;
+					gchar** _tmp38_;
+					gint _tmp38__length1;
+					const gchar* _tmp39_;
+					const gchar* _tmp40_;
+					gchar* _tmp41_;
+					gchar* _tmp42_;
+					gchar* _tmp43_;
+					gchar** _tmp44_;
+					gint _tmp44__length1;
+					gchar* _tmp45_;
+					_tmp35_ = v1;
+					_tmp35__length1 = v1_length1;
+					_tmp36_ = v1;
+					_tmp36__length1 = v1_length1;
+					_tmp37_ = v1;
+					_tmp37__length1 = v1_length1;
+					_tmp38_ = v1;
+					_tmp38__length1 = v1_length1;
+					_tmp39_ = _tmp37_[_tmp38__length1 - 2];
+					_tmp40_ = string_to_string (_tmp39_);
+					_tmp41_ = g_strdup_printf ("%i", n);
+					_tmp42_ = _tmp41_;
+					_tmp43_ = g_strconcat (_tmp40_, "-", _tmp42_, NULL);
+					_g_free0 (_tmp35_[_tmp36__length1 - 2]);
+					_tmp35_[_tmp36__length1 - 2] = _tmp43_;
+					_g_free0 (_tmp42_);
+					_tmp44_ = v1;
+					_tmp44__length1 = v1_length1;
+					_tmp45_ = _vala_g_strjoinv (".", _tmp44_, (gint) _tmp44__length1);
+					_g_free0 (name);
+					name = _tmp45_;
+				}
+				_tmp46_ = n;
+				n = _tmp46_ + 1;
+				v1 = (_vala_array_free (v1, v1_length1, (GDestroyNotify) g_free), NULL);
+				_g_object_unref0 (f2);
+				continue;
+			} else {
+				_g_object_unref0 (f2);
+				break;
+			}
+			_g_object_unref0 (f2);
 		}
 	}
-	goto __finally0;
-	__catch0_g_error:
-	{
-		GError* e = NULL;
-		FILE* _tmp24_;
-		GError* _tmp25_;
-		const gchar* _tmp26_;
-		e = _inner_error0_;
-		_inner_error0_ = NULL;
-		_tmp24_ = stderr;
-		_tmp25_ = e;
-		_tmp26_ = _tmp25_->message;
-		fputs (_tmp26_, _tmp24_);
-		_g_error_free0 (e);
-	}
-	__finally0:
-	if (G_UNLIKELY (_inner_error0_ != NULL)) {
-		gboolean _tmp27_ = FALSE;
+	_tmp47_ = dir1;
+	_tmp48_ = name;
+	_tmp49_ = g_build_filename (_tmp47_, _tmp48_, NULL);
+	dst_name = _tmp49_;
+	_tmp50_ = dst_name;
+	webkit_download_set_destination (_data3_->download, _tmp50_);
+	if (self->priv->auto_name) {
+		NotifyNotification* notice = NULL;
+		const gchar* _tmp51_;
+		const gchar* _tmp52_;
+		gchar* _tmp53_;
+		gchar* _tmp54_;
+		NotifyNotification* _tmp55_;
+		NotifyNotification* _tmp56_;
+		_tmp51_ = dst_name;
+		_tmp52_ = string_to_string (_tmp51_);
+		_tmp53_ = g_strconcat ("Save: ", _tmp52_, NULL);
+		_tmp54_ = _tmp53_;
+		_tmp55_ = notify_notification_new (_tmp54_, NULL, NULL);
+		_tmp56_ = _tmp55_;
+		_g_free0 (_tmp54_);
+		notice = _tmp56_;
+		{
+			NotifyNotification* _tmp57_;
+			_tmp57_ = notice;
+			notify_notification_show (_tmp57_, &_inner_error0_);
+			if (G_UNLIKELY (_inner_error0_ != NULL)) {
+				goto __catch0_g_error;
+			}
+		}
+		goto __finally0;
+		__catch0_g_error:
+		{
+			GError* e = NULL;
+			FILE* _tmp58_;
+			GError* _tmp59_;
+			const gchar* _tmp60_;
+			e = _inner_error0_;
+			_inner_error0_ = NULL;
+			_tmp58_ = stderr;
+			_tmp59_ = e;
+			_tmp60_ = _tmp59_->message;
+			fputs (_tmp60_, _tmp58_);
+			_g_error_free0 (e);
+		}
+		__finally0:
+		if (G_UNLIKELY (_inner_error0_ != NULL)) {
+			gboolean _tmp61_ = FALSE;
+			_g_object_unref0 (notice);
+			_g_free0 (dst_name);
+			_g_free0 (name);
+			_g_free0 (fname);
+			_g_free0 (dir1);
+			g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
+			g_clear_error (&_inner_error0_);
+			return _tmp61_;
+		}
 		_g_object_unref0 (notice);
-		_g_free0 (dst_name);
-		_g_object_unref0 (f);
-		_g_free0 (name);
-		_g_free0 (fname);
-		_g_free0 (dir1);
-		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
-		g_clear_error (&_inner_error0_);
-		return _tmp27_;
 	}
-	_tmp28_ = self->priv->notice_n;
-	self->priv->notice_n = _tmp28_ + 1;
 	result = TRUE;
-	_g_object_unref0 (notice);
 	_g_free0 (dst_name);
-	_g_object_unref0 (f);
 	_g_free0 (name);
 	_g_free0 (fname);
 	_g_free0 (dir1);
@@ -1950,8 +2090,6 @@ app_on_app_activate (App* self,
 	webkit_settings_set_enable_media_stream (settings, TRUE);
 	webkit_settings_set_enable_mediasource (settings, TRUE);
 	webkit_settings_set_enable_write_console_messages_to_stdout (settings, TRUE);
-	webkit_settings_set_user_agent (settings, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Geck" \
-"o) Version/60.5 Safari/605.1.15 Chrome/120.0.0.0 Safari/537.36");
 	webkit_settings_set_javascript_can_open_windows_automatically (settings, TRUE);
 	webkit_settings_set_javascript_can_access_clipboard (settings, TRUE);
 	webkit_settings_set_auto_load_images (settings, TRUE);
@@ -2249,7 +2387,7 @@ app_instance_init (App * self,
                    gpointer klass)
 {
 	self->priv = app_get_instance_private (self);
-	self->priv->notice_n = 0;
+	self->priv->auto_name = FALSE;
 }
 
 static void
@@ -2309,5 +2447,18 @@ _vala_array_free (gpointer array,
 {
 	_vala_array_destroy (array, array_length, destroy_func);
 	g_free (array);
+}
+
+static gssize
+_vala_array_length (gpointer array)
+{
+	gssize length;
+	length = 0;
+	if (array) {
+		while (((gpointer*) array)[length]) {
+			length++;
+		}
+	}
+	return length;
 }
 
