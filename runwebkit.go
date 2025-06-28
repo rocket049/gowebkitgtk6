@@ -132,3 +132,8 @@ func AppSetAutoSave(m bool) {
 	}
 	C.app_set_auto_save(C.gint(mode))
 }
+
+// set default save path
+func AppSetSavePath(p string) {
+	C.app_set_save_path(C.CString(p))
+}

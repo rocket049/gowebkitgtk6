@@ -40,6 +40,7 @@ struct _App {
 	GtkApplication* app;
 	WebKitWebView* webview;
 	GtkWindow* win;
+	gchar* save_path;
 };
 
 struct _AppClass {
@@ -82,6 +83,7 @@ VALA_EXTERN void app_folder_select_dialog (const gchar* title,
                                gpointer _user_data_);
 VALA_EXTERN gchar* app_folder_select_dialog_finish (GAsyncResult* _res_);
 VALA_EXTERN void app_set_auto_save (gint m);
+VALA_EXTERN void app_set_save_path (const gchar* s);
 VALA_EXTERN void app_create_app (const gchar* id,
                      const gchar* title,
                      const gchar* url);

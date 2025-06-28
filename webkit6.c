@@ -259,17 +259,39 @@ struct _AppSelectFileAndSaveData {
 	App* self;
 	gchar* name;
 	gboolean result;
-	gchar* p;
+	gchar* start;
 	gchar* _tmp0_;
 	const gchar* _tmp1_;
+	gint _tmp2_;
+	gint _tmp3_;
+	const gchar* _tmp4_;
+	const gchar* _tmp5_;
+	gchar* _tmp6_;
+	gchar* _tmp7_;
+	gchar* _tmp8_;
+	const gchar* _tmp9_;
+	const gchar* _tmp10_;
+	gchar* _tmp11_;
+	gchar* _tmp12_;
+	gchar* _tmp13_;
+	gchar* p;
+	const gchar* _tmp14_;
+	gchar* _tmp15_;
+	const gchar* _tmp16_;
 	GFile* f1;
-	GFile* _tmp2_;
+	GFile* _tmp17_;
 	GFile* f2;
-	const gchar* _tmp3_;
-	GFile* _tmp4_;
+	const gchar* _tmp18_;
+	GFile* _tmp19_;
 	gboolean ret;
-	GFile* _tmp5_;
-	GFile* _tmp6_;
+	GFile* _tmp20_;
+	GFile* _tmp21_;
+	const gchar* _tmp22_;
+	gchar* _tmp23_;
+	GError* e;
+	FILE* _tmp24_;
+	GError* _tmp25_;
+	const gchar* _tmp26_;
 	GError* _inner_error0_;
 };
 
@@ -1524,31 +1546,61 @@ app_select_file_and_save_co (AppSelectFileAndSaveData* _data_)
 		g_assert_not_reached ();
 	}
 	_state_0:
+	_data_->_tmp0_ = g_strdup (_data_->name);
+	_data_->start = _data_->_tmp0_;
+	_data_->_tmp1_ = _data_->self->save_path;
+	_data_->_tmp2_ = strlen (_data_->_tmp1_);
+	_data_->_tmp3_ = _data_->_tmp2_;
+	if (_data_->_tmp3_ > 0) {
+		_data_->_tmp4_ = _data_->self->save_path;
+		_data_->_tmp5_ = _data_->start;
+		_data_->_tmp6_ = g_path_get_basename (_data_->_tmp5_);
+		_data_->_tmp7_ = _data_->_tmp6_;
+		_data_->_tmp8_ = g_build_filename (_data_->_tmp4_, _data_->_tmp7_, NULL);
+		_g_free0 (_data_->start);
+		_data_->start = _data_->_tmp8_;
+		_g_free0 (_data_->_tmp7_);
+	} else {
+		_data_->_tmp9_ = g_get_home_dir ();
+		_data_->_tmp10_ = _data_->start;
+		_data_->_tmp11_ = g_path_get_basename (_data_->_tmp10_);
+		_data_->_tmp12_ = _data_->_tmp11_;
+		_data_->_tmp13_ = g_build_filename (_data_->_tmp9_, _data_->_tmp12_, NULL);
+		_g_free0 (_data_->start);
+		_data_->start = _data_->_tmp13_;
+		_g_free0 (_data_->_tmp12_);
+	}
+	_data_->_tmp14_ = _data_->start;
 	_data_->_state_ = 1;
-	app_file_save_dialog ("保存文件(Save file)", _data_->name, app_select_file_and_save_ready, _data_);
+	app_file_save_dialog ("保存文件(Save file)", _data_->_tmp14_, app_select_file_and_save_ready, _data_);
 	return FALSE;
 	_state_1:
-	_data_->_tmp0_ = app_file_save_dialog_finish (_data_->_res_);
-	_data_->p = _data_->_tmp0_;
-	_data_->_tmp1_ = _data_->p;
-	if (_data_->_tmp1_ != NULL) {
-		_data_->_tmp2_ = g_file_new_for_path (_data_->name);
-		_data_->f1 = _data_->_tmp2_;
-		_data_->_tmp3_ = _data_->p;
-		_data_->_tmp4_ = g_file_new_for_path (_data_->_tmp3_);
-		_data_->f2 = _data_->_tmp4_;
+	_data_->_tmp15_ = app_file_save_dialog_finish (_data_->_res_);
+	_data_->p = _data_->_tmp15_;
+	_data_->_tmp16_ = _data_->p;
+	if (_data_->_tmp16_ != NULL) {
+		_data_->_tmp17_ = g_file_new_for_path (_data_->name);
+		_data_->f1 = _data_->_tmp17_;
+		_data_->_tmp18_ = _data_->p;
+		_data_->_tmp19_ = g_file_new_for_path (_data_->_tmp18_);
+		_data_->f2 = _data_->_tmp19_;
 		{
-			_data_->_tmp5_ = _data_->f1;
-			_data_->_tmp6_ = _data_->f2;
-			_data_->ret = g_file_copy (_data_->_tmp5_, _data_->_tmp6_, G_FILE_COPY_OVERWRITE, NULL, NULL, NULL, &_data_->_inner_error0_);
+			_data_->_tmp20_ = _data_->f1;
+			_data_->_tmp21_ = _data_->f2;
+			_data_->ret = g_file_copy (_data_->_tmp20_, _data_->_tmp21_, G_FILE_COPY_OVERWRITE, NULL, NULL, NULL, &_data_->_inner_error0_);
 			if (G_UNLIKELY (_data_->_inner_error0_ != NULL)) {
 				goto __catch0_g_error;
 			}
 			unlink (_data_->name);
+			_data_->_tmp22_ = _data_->p;
+			_data_->_tmp23_ = g_path_get_dirname (_data_->_tmp22_);
+			_g_free0 (_data_->self->save_path);
+			_data_->self->save_path = _data_->_tmp23_;
 			_data_->result = _data_->ret;
 			_g_object_unref0 (_data_->f2);
 			_g_object_unref0 (_data_->f1);
 			_g_free0 (_data_->p);
+			_g_free0 (_data_->start);
 			g_task_return_pointer (_data_->_async_result, _data_, NULL);
 			if (_data_->_state_ != 0) {
 				while (!g_task_get_completed (_data_->_async_result)) {
@@ -1561,13 +1613,20 @@ app_select_file_and_save_co (AppSelectFileAndSaveData* _data_)
 		goto __finally0;
 		__catch0_g_error:
 		{
-			g_clear_error (&_data_->_inner_error0_);
+			_data_->e = _data_->_inner_error0_;
+			_data_->_inner_error0_ = NULL;
+			_data_->_tmp24_ = stderr;
+			_data_->_tmp25_ = _data_->e;
+			_data_->_tmp26_ = _data_->_tmp25_->message;
+			fputs (_data_->_tmp26_, _data_->_tmp24_);
+			_g_error_free0 (_data_->e);
 		}
 		__finally0:
 		if (G_UNLIKELY (_data_->_inner_error0_ != NULL)) {
 			_g_object_unref0 (_data_->f2);
 			_g_object_unref0 (_data_->f1);
 			_g_free0 (_data_->p);
+			_g_free0 (_data_->start);
 			g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _data_->_inner_error0_->message, g_quark_to_string (_data_->_inner_error0_->domain), _data_->_inner_error0_->code);
 			g_clear_error (&_data_->_inner_error0_);
 			g_object_unref (_data_->_async_result);
@@ -1578,6 +1637,7 @@ app_select_file_and_save_co (AppSelectFileAndSaveData* _data_)
 	}
 	_data_->result = TRUE;
 	_g_free0 (_data_->p);
+	_g_free0 (_data_->start);
 	g_task_return_pointer (_data_->_async_result, _data_, NULL);
 	if (_data_->_state_ != 0) {
 		while (!g_task_get_completed (_data_->_async_result)) {
@@ -1602,6 +1662,18 @@ app_set_auto_save (gint m)
 	mode = _tmp0_;
 	_tmp1_ = app_application;
 	_tmp1_->priv->auto_name = mode;
+}
+
+void
+app_set_save_path (const gchar* s)
+{
+	App* _tmp0_;
+	gchar* _tmp1_;
+	g_return_if_fail (s != NULL);
+	_tmp0_ = app_application;
+	_tmp1_ = g_strdup (s);
+	_g_free0 (_tmp0_->save_path);
+	_tmp0_->save_path = _tmp1_;
 }
 
 static Block2Data*
@@ -1683,20 +1755,20 @@ __lambda7_ (Block3Data* _data3_,
 	const gchar* _tmp0_;
 	gchar* _tmp1_;
 	gchar* fname = NULL;
-	gchar* _tmp5_;
+	gchar* _tmp10_;
 	gchar* name = NULL;
-	const gchar* _tmp6_;
-	gchar* _tmp7_;
+	const gchar* _tmp11_;
+	gchar* _tmp12_;
 	gchar* dst_name = NULL;
-	const gchar* _tmp47_;
-	const gchar* _tmp48_;
-	gchar* _tmp49_;
-	const gchar* _tmp50_;
+	const gchar* _tmp52_;
+	const gchar* _tmp53_;
+	gchar* _tmp54_;
+	const gchar* _tmp55_;
 	GError* _inner_error0_ = NULL;
 	gboolean result;
 	self = _data3_->self;
 	g_return_val_if_fail (dst != NULL, FALSE);
-	_tmp0_ = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+	_tmp0_ = self->save_path;
 	_tmp1_ = g_strdup (_tmp0_);
 	dir1 = _tmp1_;
 	if (!self->priv->auto_name) {
@@ -1709,41 +1781,56 @@ __lambda7_ (Block3Data* _data3_,
 		dir1 = _tmp3_;
 		_tmp4_ = dir1;
 		mkdir (_tmp4_, (mode_t) 0755);
+	} else {
+		const gchar* _tmp5_;
+		gint _tmp6_;
+		gint _tmp7_;
+		_tmp5_ = dir1;
+		_tmp6_ = strlen (_tmp5_);
+		_tmp7_ = _tmp6_;
+		if (_tmp7_ == 0) {
+			const gchar* _tmp8_;
+			gchar* _tmp9_;
+			_tmp8_ = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+			_tmp9_ = g_strdup (_tmp8_);
+			_g_free0 (dir1);
+			dir1 = _tmp9_;
+		}
 	}
-	_tmp5_ = g_strdup (dst);
-	fname = _tmp5_;
-	_tmp6_ = fname;
-	_tmp7_ = g_strdup (_tmp6_);
-	name = _tmp7_;
+	_tmp10_ = g_strdup (dst);
+	fname = _tmp10_;
+	_tmp11_ = fname;
+	_tmp12_ = g_strdup (_tmp11_);
+	name = _tmp12_;
 	if (!self->priv->auto_name) {
 		GFile* f = NULL;
-		const gchar* _tmp8_;
-		const gchar* _tmp9_;
-		gchar* _tmp10_;
-		gchar* _tmp11_;
-		GFile* _tmp12_;
-		GFile* _tmp13_;
-		GFile* _tmp14_;
-		_tmp8_ = dir1;
-		_tmp9_ = name;
-		_tmp10_ = g_build_filename (_tmp8_, _tmp9_, NULL);
-		_tmp11_ = _tmp10_;
-		_tmp12_ = g_file_new_for_path (_tmp11_);
-		_tmp13_ = _tmp12_;
-		_g_free0 (_tmp11_);
-		f = _tmp13_;
-		_tmp14_ = f;
-		if (g_file_query_exists (_tmp14_, NULL)) {
-			const gchar* _tmp15_;
-			const gchar* _tmp16_;
-			gchar* _tmp17_;
-			gchar* _tmp18_;
-			_tmp15_ = dir1;
-			_tmp16_ = name;
-			_tmp17_ = g_build_filename (_tmp15_, _tmp16_, NULL);
-			_tmp18_ = _tmp17_;
-			unlink (_tmp18_);
-			_g_free0 (_tmp18_);
+		const gchar* _tmp13_;
+		const gchar* _tmp14_;
+		gchar* _tmp15_;
+		gchar* _tmp16_;
+		GFile* _tmp17_;
+		GFile* _tmp18_;
+		GFile* _tmp19_;
+		_tmp13_ = dir1;
+		_tmp14_ = name;
+		_tmp15_ = g_build_filename (_tmp13_, _tmp14_, NULL);
+		_tmp16_ = _tmp15_;
+		_tmp17_ = g_file_new_for_path (_tmp16_);
+		_tmp18_ = _tmp17_;
+		_g_free0 (_tmp16_);
+		f = _tmp18_;
+		_tmp19_ = f;
+		if (g_file_query_exists (_tmp19_, NULL)) {
+			const gchar* _tmp20_;
+			const gchar* _tmp21_;
+			gchar* _tmp22_;
+			gchar* _tmp23_;
+			_tmp20_ = dir1;
+			_tmp21_ = name;
+			_tmp22_ = g_build_filename (_tmp20_, _tmp21_, NULL);
+			_tmp23_ = _tmp22_;
+			unlink (_tmp23_);
+			_g_free0 (_tmp23_);
 		}
 		_g_object_unref0 (f);
 	} else {
@@ -1751,94 +1838,94 @@ __lambda7_ (Block3Data* _data3_,
 		n = 1;
 		while (TRUE) {
 			GFile* f2 = NULL;
-			const gchar* _tmp19_;
-			const gchar* _tmp20_;
-			gchar* _tmp21_;
-			gchar* _tmp22_;
-			GFile* _tmp23_;
-			GFile* _tmp24_;
-			GFile* _tmp25_;
-			_tmp19_ = dir1;
-			_tmp20_ = name;
-			_tmp21_ = g_build_filename (_tmp19_, _tmp20_, NULL);
-			_tmp22_ = _tmp21_;
-			_tmp23_ = g_file_new_for_path (_tmp22_);
-			_tmp24_ = _tmp23_;
-			_g_free0 (_tmp22_);
-			f2 = _tmp24_;
-			_tmp25_ = f2;
-			if (g_file_query_exists (_tmp25_, NULL)) {
+			const gchar* _tmp24_;
+			const gchar* _tmp25_;
+			gchar* _tmp26_;
+			gchar* _tmp27_;
+			GFile* _tmp28_;
+			GFile* _tmp29_;
+			GFile* _tmp30_;
+			_tmp24_ = dir1;
+			_tmp25_ = name;
+			_tmp26_ = g_build_filename (_tmp24_, _tmp25_, NULL);
+			_tmp27_ = _tmp26_;
+			_tmp28_ = g_file_new_for_path (_tmp27_);
+			_tmp29_ = _tmp28_;
+			_g_free0 (_tmp27_);
+			f2 = _tmp29_;
+			_tmp30_ = f2;
+			if (g_file_query_exists (_tmp30_, NULL)) {
 				gchar** v1 = NULL;
-				const gchar* _tmp26_;
-				gchar** _tmp27_;
-				gchar** _tmp28_;
+				const gchar* _tmp31_;
+				gchar** _tmp32_;
+				gchar** _tmp33_;
 				gint v1_length1;
 				gint _v1_size_;
-				gchar** _tmp29_;
-				gint _tmp29__length1;
-				gint _tmp46_;
-				_tmp26_ = fname;
-				_tmp28_ = _tmp27_ = g_strsplit (_tmp26_, ".", -1);
-				v1 = _tmp28_;
-				v1_length1 = _vala_array_length (_tmp27_);
+				gchar** _tmp34_;
+				gint _tmp34__length1;
+				gint _tmp51_;
+				_tmp31_ = fname;
+				_tmp33_ = _tmp32_ = g_strsplit (_tmp31_, ".", -1);
+				v1 = _tmp33_;
+				v1_length1 = _vala_array_length (_tmp32_);
 				_v1_size_ = v1_length1;
-				_tmp29_ = v1;
-				_tmp29__length1 = v1_length1;
-				if (_tmp29__length1 == 1) {
-					gchar* _tmp30_;
-					gchar* _tmp31_;
-					const gchar* _tmp32_;
-					const gchar* _tmp33_;
-					gchar* _tmp34_;
-					_tmp30_ = g_strdup_printf ("%i", n);
-					_tmp31_ = _tmp30_;
-					_tmp32_ = fname;
-					_tmp33_ = string_to_string (_tmp32_);
-					_tmp34_ = g_strconcat (_tmp31_, "-", _tmp33_, NULL);
+				_tmp34_ = v1;
+				_tmp34__length1 = v1_length1;
+				if (_tmp34__length1 == 1) {
+					gchar* _tmp35_;
+					gchar* _tmp36_;
+					const gchar* _tmp37_;
+					const gchar* _tmp38_;
+					gchar* _tmp39_;
+					_tmp35_ = g_strdup_printf ("%i", n);
+					_tmp36_ = _tmp35_;
+					_tmp37_ = fname;
+					_tmp38_ = string_to_string (_tmp37_);
+					_tmp39_ = g_strconcat (_tmp36_, "-", _tmp38_, NULL);
 					_g_free0 (name);
-					name = _tmp34_;
-					_g_free0 (_tmp31_);
+					name = _tmp39_;
+					_g_free0 (_tmp36_);
 				} else {
-					gchar** _tmp35_;
-					gint _tmp35__length1;
-					gchar** _tmp36_;
-					gint _tmp36__length1;
-					gchar** _tmp37_;
-					gint _tmp37__length1;
-					gchar** _tmp38_;
-					gint _tmp38__length1;
-					const gchar* _tmp39_;
-					const gchar* _tmp40_;
-					gchar* _tmp41_;
-					gchar* _tmp42_;
-					gchar* _tmp43_;
-					gchar** _tmp44_;
-					gint _tmp44__length1;
-					gchar* _tmp45_;
-					_tmp35_ = v1;
-					_tmp35__length1 = v1_length1;
-					_tmp36_ = v1;
-					_tmp36__length1 = v1_length1;
-					_tmp37_ = v1;
-					_tmp37__length1 = v1_length1;
-					_tmp38_ = v1;
-					_tmp38__length1 = v1_length1;
-					_tmp39_ = _tmp37_[_tmp38__length1 - 2];
-					_tmp40_ = string_to_string (_tmp39_);
-					_tmp41_ = g_strdup_printf ("%i", n);
-					_tmp42_ = _tmp41_;
-					_tmp43_ = g_strconcat (_tmp40_, "-", _tmp42_, NULL);
-					_g_free0 (_tmp35_[_tmp36__length1 - 2]);
-					_tmp35_[_tmp36__length1 - 2] = _tmp43_;
-					_g_free0 (_tmp42_);
-					_tmp44_ = v1;
-					_tmp44__length1 = v1_length1;
-					_tmp45_ = _vala_g_strjoinv (".", _tmp44_, (gint) _tmp44__length1);
+					gchar** _tmp40_;
+					gint _tmp40__length1;
+					gchar** _tmp41_;
+					gint _tmp41__length1;
+					gchar** _tmp42_;
+					gint _tmp42__length1;
+					gchar** _tmp43_;
+					gint _tmp43__length1;
+					const gchar* _tmp44_;
+					const gchar* _tmp45_;
+					gchar* _tmp46_;
+					gchar* _tmp47_;
+					gchar* _tmp48_;
+					gchar** _tmp49_;
+					gint _tmp49__length1;
+					gchar* _tmp50_;
+					_tmp40_ = v1;
+					_tmp40__length1 = v1_length1;
+					_tmp41_ = v1;
+					_tmp41__length1 = v1_length1;
+					_tmp42_ = v1;
+					_tmp42__length1 = v1_length1;
+					_tmp43_ = v1;
+					_tmp43__length1 = v1_length1;
+					_tmp44_ = _tmp42_[_tmp43__length1 - 2];
+					_tmp45_ = string_to_string (_tmp44_);
+					_tmp46_ = g_strdup_printf ("%i", n);
+					_tmp47_ = _tmp46_;
+					_tmp48_ = g_strconcat (_tmp45_, "-", _tmp47_, NULL);
+					_g_free0 (_tmp40_[_tmp41__length1 - 2]);
+					_tmp40_[_tmp41__length1 - 2] = _tmp48_;
+					_g_free0 (_tmp47_);
+					_tmp49_ = v1;
+					_tmp49__length1 = v1_length1;
+					_tmp50_ = _vala_g_strjoinv (".", _tmp49_, (gint) _tmp49__length1);
 					_g_free0 (name);
-					name = _tmp45_;
+					name = _tmp50_;
 				}
-				_tmp46_ = n;
-				n = _tmp46_ + 1;
+				_tmp51_ = n;
+				n = _tmp51_ + 1;
 				v1 = (_vala_array_free (v1, v1_length1, (GDestroyNotify) g_free), NULL);
 				_g_object_unref0 (f2);
 				continue;
@@ -1849,32 +1936,32 @@ __lambda7_ (Block3Data* _data3_,
 			_g_object_unref0 (f2);
 		}
 	}
-	_tmp47_ = dir1;
-	_tmp48_ = name;
-	_tmp49_ = g_build_filename (_tmp47_, _tmp48_, NULL);
-	dst_name = _tmp49_;
-	_tmp50_ = dst_name;
-	webkit_download_set_destination (_data3_->download, _tmp50_);
+	_tmp52_ = dir1;
+	_tmp53_ = name;
+	_tmp54_ = g_build_filename (_tmp52_, _tmp53_, NULL);
+	dst_name = _tmp54_;
+	_tmp55_ = dst_name;
+	webkit_download_set_destination (_data3_->download, _tmp55_);
 	if (self->priv->auto_name) {
 		NotifyNotification* notice = NULL;
-		const gchar* _tmp51_;
-		const gchar* _tmp52_;
-		gchar* _tmp53_;
-		gchar* _tmp54_;
-		NotifyNotification* _tmp55_;
-		NotifyNotification* _tmp56_;
-		_tmp51_ = dst_name;
-		_tmp52_ = string_to_string (_tmp51_);
-		_tmp53_ = g_strconcat ("Save: ", _tmp52_, NULL);
-		_tmp54_ = _tmp53_;
-		_tmp55_ = notify_notification_new (_tmp54_, NULL, NULL);
-		_tmp56_ = _tmp55_;
-		_g_free0 (_tmp54_);
-		notice = _tmp56_;
+		const gchar* _tmp56_;
+		const gchar* _tmp57_;
+		gchar* _tmp58_;
+		gchar* _tmp59_;
+		NotifyNotification* _tmp60_;
+		NotifyNotification* _tmp61_;
+		_tmp56_ = dst_name;
+		_tmp57_ = string_to_string (_tmp56_);
+		_tmp58_ = g_strconcat ("Save: ", _tmp57_, NULL);
+		_tmp59_ = _tmp58_;
+		_tmp60_ = notify_notification_new (_tmp59_, NULL, NULL);
+		_tmp61_ = _tmp60_;
+		_g_free0 (_tmp59_);
+		notice = _tmp61_;
 		{
-			NotifyNotification* _tmp57_;
-			_tmp57_ = notice;
-			notify_notification_show (_tmp57_, &_inner_error0_);
+			NotifyNotification* _tmp62_;
+			_tmp62_ = notice;
+			notify_notification_show (_tmp62_, &_inner_error0_);
 			if (G_UNLIKELY (_inner_error0_ != NULL)) {
 				goto __catch0_g_error;
 			}
@@ -1883,20 +1970,20 @@ __lambda7_ (Block3Data* _data3_,
 		__catch0_g_error:
 		{
 			GError* e = NULL;
-			FILE* _tmp58_;
-			GError* _tmp59_;
-			const gchar* _tmp60_;
+			FILE* _tmp63_;
+			GError* _tmp64_;
+			const gchar* _tmp65_;
 			e = _inner_error0_;
 			_inner_error0_ = NULL;
-			_tmp58_ = stderr;
-			_tmp59_ = e;
-			_tmp60_ = _tmp59_->message;
-			fputs (_tmp60_, _tmp58_);
+			_tmp63_ = stderr;
+			_tmp64_ = e;
+			_tmp65_ = _tmp64_->message;
+			fputs (_tmp65_, _tmp63_);
 			_g_error_free0 (e);
 		}
 		__finally0:
 		if (G_UNLIKELY (_inner_error0_ != NULL)) {
-			gboolean _tmp61_ = FALSE;
+			gboolean _tmp66_ = FALSE;
 			_g_object_unref0 (notice);
 			_g_free0 (dst_name);
 			_g_free0 (name);
@@ -1904,7 +1991,7 @@ __lambda7_ (Block3Data* _data3_,
 			_g_free0 (dir1);
 			g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
 			g_clear_error (&_inner_error0_);
-			return _tmp61_;
+			return _tmp66_;
 		}
 		_g_object_unref0 (notice);
 	}
@@ -2386,8 +2473,11 @@ static void
 app_instance_init (App * self,
                    gpointer klass)
 {
+	gchar* _tmp0_;
 	self->priv = app_get_instance_private (self);
 	self->priv->auto_name = FALSE;
+	_tmp0_ = g_strdup ("");
+	self->save_path = _tmp0_;
 }
 
 static void
@@ -2400,6 +2490,7 @@ app_finalize (GObject * obj)
 	_g_object_unref0 (self->win);
 	_g_free0 (self->priv->home_url);
 	_g_free0 (self->priv->title);
+	_g_free0 (self->save_path);
 	G_OBJECT_CLASS (app_parent_class)->finalize (obj);
 }
 

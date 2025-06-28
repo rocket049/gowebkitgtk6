@@ -11,6 +11,7 @@ public class App: GLib.Object {
     private string home_url;
     private string title;
     private bool auto_name = false;
+    public string save_path = "";
     public void create(string id, string title, string uri) {
         this.title = title;
         Gtk.init();
@@ -148,16 +149,30 @@ public class App: GLib.Object {
 
     }
     private async bool select_file_and_save( string name ) {
-        var p = yield App.file_save_dialog("保存文件(Save file)", name);
+        var start = name;
+        //GLib.stdout.puts(start);
+
+        if ( this.save_path.length > 0 ) {
+            start = Path.build_filename(this.save_path, Path.get_basename(start));
+        } else {
+            start = Path.build_filename(GLib.Environment.get_home_dir(), Path.get_basename(start));
+        }
+        
+        var p = yield App.file_save_dialog("保存文件(Save file)", start);
         if (p!=null) {
             var f1 = GLib.File.new_for_path(name);
             var f2 = GLib.File.new_for_path(p);
+            
             try {
                 var ret = f1.copy(f2, GLib.FileCopyFlags.OVERWRITE, null, null );
                 Posix.unlink(name);
+                this.save_path = Path.get_dirname( p );
+                //GLib.stdout.puts(p);
                 return ret;
             }
-            catch (Error e) {}
+            catch (Error e) {
+                GLib.stderr.puts(e.message);
+            }
         }
         return true;
     }
@@ -165,6 +180,11 @@ public class App: GLib.Object {
         bool mode = (m==0)?false:true;
         App.application.auto_name = mode;
     }
+
+    public static void set_save_path(string s) {
+        App.application.save_path = s;
+    }
+
     private void on_app_activate(Gtk.Application app, string uri) {
         this.home_url = uri;
         var win = new  Gtk.Window();
@@ -197,15 +217,21 @@ public class App: GLib.Object {
         this.webview.set_child_visible(true);
         this.webview.network_session.download_started.connect((download)=>{
             download.finished.connect(()=>{
-                if ( !auto_name )
+                if ( !auto_name ){
                     select_file_and_save(download.get_destination());
+                }
+                    
             });
             download.decide_destination.connect((dst)=>{
-                var dir1 = GLib.Environment.get_user_special_dir(GLib.UserDirectory.DOWNLOAD);
+                var dir1 = this.save_path;
 
                 if ( !auto_name ) {
                     dir1 = Path.build_filename(GLib.Environment.get_tmp_dir(), "webkit6go");
                     Posix.mkdir(dir1, 0755);
+                } else {
+                    if ( dir1.length == 0 ) {
+                        dir1 = GLib.Environment.get_user_special_dir(GLib.UserDirectory.DOWNLOAD);
+                    }
                 }
 
                 var fname = dst;
